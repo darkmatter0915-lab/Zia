@@ -144,11 +144,14 @@ function checklist(items, toggleType, path, label, route, formType) {
 
 function portfolioTotals(state) {
   const total = state.investments.holdings.reduce((result, holding) => {
-    const cost = toNumber(holding.shares) * toNumber(holding.averageCost)
-    const value = toNumber(holding.shares) * toNumber(holding.currentPrice)
-    result.cost += cost
-    result.value += value
-    if (holding.averageCost > 0 && holding.currentPrice > 0) result.valid += 1
+    const shares = toNumber(holding.shares)
+    const averageCost = toNumber(holding.averageCost)
+    const currentPrice = toNumber(holding.currentPrice)
+    if (shares <= 0 || averageCost <= 0 || currentPrice <= 0) return result
+
+    result.cost += shares * averageCost
+    result.value += shares * currentPrice
+    result.valid += 1
     return result
   }, { cost: 0, value: 0, valid: 0 })
 
@@ -277,7 +280,7 @@ function renderRestaurant(app) {
 
   return `
     <section class="page-stack">
-      ${intro('從備料到收店，一頁掌握。', '日報、例行檢查與低庫存集中管理。', 'restaurantLog', latest ? '更新日報' : '新增日報')}
+      ${intro('從備料到收店，一頁掌握。', '日報、例行檢查與低庫存集中管理。', 'restaurantLog', '新增日報')}
       <section class="stats-grid three">
         ${stat('最近營業額', latest ? formatCurrency(latest.sales, currency) : '尚未紀錄', latest ? formatDate(latest.date) : '建立第一份日報', '⌁')}
         ${stat('最近來客', latest ? formatNumber(latest.covers, 0) : '0', latest?.covers ? `客單 ${formatCurrency(latest.sales / latest.covers, currency)}` : '尚未紀錄', '◎')}
@@ -429,7 +432,7 @@ function renderInvestments(app) {
             const cost = toNumber(holding.shares) * toNumber(holding.averageCost)
             const value = toNumber(holding.shares) * toNumber(holding.currentPrice)
             const profit = value - cost
-            const valid = holding.averageCost > 0 && holding.currentPrice > 0
+            const valid = holding.shares > 0 && holding.averageCost > 0 && holding.currentPrice > 0
             return `
               <article class="mini-card holding-card">
                 <header>

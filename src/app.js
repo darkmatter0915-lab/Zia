@@ -358,6 +358,9 @@ export class ZiaApp {
       record.updatedAt = new Date().toISOString()
     }
 
+    if (type === 'trip' && !current) this.tripId = record.id
+    this.editor = null
+
     this.store.update((draft) => {
       const list = this.listAt(draft, config.path)
       const index = list.findIndex((item) => item.id === record.id)
@@ -368,8 +371,6 @@ export class ZiaApp {
       route: this.route,
     })
 
-    if (type === 'trip' && !current) this.tripId = record.id
-    this.editor = null
     this.say(`${config.label}已${current ? '更新' : '新增'}`)
   }
 
@@ -618,7 +619,7 @@ export class ZiaApp {
     `
 
     this.root.querySelectorAll('[data-overlay-panel]').forEach((panel) => {
-      panel.addEventListener('click', (event) => event.stopPropagation(), { once: true })
+      panel.addEventListener('click', (event) => event.stopPropagation())
     })
     this.updateClock()
   }
