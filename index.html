@@ -1,13 +1,29 @@
 <!doctype html>
-<html lang="zh-Hant">
+<html lang="zh-Hant" data-theme="dark" data-accent="violet">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#0b1020" />
-    <title>Zia</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="description" content="Zia 是本機優先的個人中控台，整合任務、餐廳、旅遊、投資、車庫、遊戲與筆記。" />
+    <meta name="theme-color" content="#080b12" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Zia" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self' ws: wss:; font-src 'self'; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self'"
+    />
+    <link rel="icon" href="%BASE_URL%icons/zia-icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="%BASE_URL%icons/zia-icon.svg" />
+    <link rel="manifest" href="%BASE_URL%manifest.webmanifest" />
+    <title>Zia · Personal OS</title>
   </head>
   <body>
-    <div id="app"></div>
+    <div id="app">
+      <div style="display:grid;min-height:100vh;place-items:center;background:#080b12;color:#9a8cff;font-family:system-ui,sans-serif">
+        <strong>ZIA INITIALIZING</strong>
+      </div>
+    </div>
+    <noscript>請啟用 JavaScript 才能使用 Zia。</noscript>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>
