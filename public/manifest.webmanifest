@@ -1,0 +1,39 @@
+{
+  "name": "Zia Personal OS",
+  "short_name": "Zia",
+  "description": "本機優先的個人中控台，整合任務、餐廳、旅遊、投資、車庫、遊戲與筆記。",
+  "lang": "zh-Hant-TW",
+  "id": "./",
+  "start_url": "./#/overview",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#080b12",
+  "theme_color": "#080b12",
+  "categories": ["productivity", "business", "lifestyle"],
+  "icons": [
+    {
+      "src": "icons/zia-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "今天任務",
+      "short_name": "任務",
+      "url": "./#/tasks"
+    },
+    {
+      "name": "餐廳營運",
+      "short_name": "餐廳",
+      "url": "./#/restaurant"
+    },
+    {
+      "name": "旅行規劃",
+      "short_name": "旅遊",
+      "url": "./#/travel"
+    }
+  ]
+}
