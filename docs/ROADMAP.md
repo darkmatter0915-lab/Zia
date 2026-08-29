@@ -1,28 +1,32 @@
 # Zia Roadmap
 
-## Phase 1 — Foundation
-- Responsive web shell
-- Module cards
-- Status console
-- Vite development setup
+## 1.0 已完成
 
-## Phase 2 — Core modules
-- AI workspace
-- Personal dashboard
-- Travel planner
-- Investment tracker
-- Restaurant operations
+- [x] 響應式桌面與手機介面
+- [x] 總覽、任務、餐廳、旅遊、投資、車庫、遊戲、筆記與設定
+- [x] 所有核心資料的新增、編輯、刪除與狀態切換
+- [x] 本機資料保存與跨分頁同步
+- [x] 全域搜尋
+- [x] JSON 備份、匯入與重設
+- [x] 深色、淺色、強調色與緊湊模式
+- [x] PWA manifest、應用程式圖示與離線快取
+- [x] 專案完整性檢查與正式建置
+- [x] GitHub Pages 自動部署工作流程
 
-## Phase 3 — Connected services
-- Authentication
-- Database
-- Notifications
-- External APIs
-- Automation workflows
+## 1.1 可擴充
 
-## Phase 4 — Product polish
-- Mobile-first PWA
-- Offline support
-- User settings
-- Deployment pipeline
-- Monitoring and analytics
+- 雲端登入與加密同步
+- 推播通知與到期提醒
+- 行事曆整合
+- 餐廳日報趨勢圖與 CSV 匯出
+- 匯率與旅程多人共享
+- 經授權的即時市場資料
+- 車輛保養通知
+- 照片與附件
+
+## 設計原則
+
+1. 本機優先，資料所有權留在使用者手中。
+2. 未連接資料源時，清楚標示手動資料，不製造假的即時性。
+3. 手機可完整操作，不把重要功能藏在桌面版。
+4. 每個模組都能獨立演進，不讓單一功能拖垮整個系統。
