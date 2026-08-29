@@ -1,12 +1,17 @@
 {
-  "name": "zia",
+  "name": "zia-personal-os",
   "private": true,
-  "version": "0.1.0",
+  "version": "1.0.0",
+  "description": "Local-first personal control center for tasks, restaurant operations, travel, investments, vehicles, games and notes.",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "check": "node scripts/check.mjs",
+    "build": "npm run check && vite build",
     "preview": "vite preview"
+  },
+  "engines": {
+    "node": ">=22"
   },
   "devDependencies": {
     "vite": "^7.1.0"
