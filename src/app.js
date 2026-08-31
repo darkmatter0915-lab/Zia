@@ -138,6 +138,7 @@ export class ZiaApp {
   handleClick(event) {
     const target = event.target.closest('[data-action]')
     if (!target) return
+    if (target.matches('.overlay[data-action]') && event.target !== target) return
 
     const action = target.dataset.action
     const { id, type, route, path, label, filter } = target.dataset
@@ -618,9 +619,6 @@ export class ZiaApp {
       <div class="toast" role="status" aria-live="polite"></div>
     `
 
-    this.root.querySelectorAll('[data-overlay-panel]').forEach((panel) => {
-      panel.addEventListener('click', (event) => event.stopPropagation())
-    })
     this.updateClock()
   }
 }
