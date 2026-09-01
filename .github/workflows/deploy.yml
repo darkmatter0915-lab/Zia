@@ -21,6 +21,29 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Materialize premium Dungeon Reborn payload
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          mkdir -p public/dungeon-reborn/game
+          fetch_blob() {
+            curl -fsSL \
+              -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+              -H "Accept: application/vnd.github+json" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              "https://api.github.com/repos/${GITHUB_REPOSITORY}/git/blobs/$1" \
+              | jq -r '.content' \
+              | tr -d '\n' \
+              | base64 --decode > "$2"
+          }
+          fetch_blob c04ff7cd2e00bf5a5643f4c693de81ecd44d6f21 public/dungeon-reborn/game/premium-boot-20260902.js
+          fetch_blob f7d9da72cb87a3cb0465c6cf55bf809e178770d4 public/dungeon-reborn/game/premium-payload-css-20260902.js
+          fetch_blob bb3847ff209b4b9888eef453f0241dd658836db2 public/dungeon-reborn/game/premium-payload-js-20260902-all.js
+          node --check public/dungeon-reborn/game/premium-boot-20260902.js
+          node --check public/dungeon-reborn/game/premium-payload-css-20260902.js
+          node --check public/dungeon-reborn/game/premium-payload-js-20260902-all.js
+
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
