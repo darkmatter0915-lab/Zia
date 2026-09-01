@@ -3,50 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-<meta name="theme-color" content="#080611">
+<meta name="theme-color" content="#08050d">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>地下城重生｜手機版</title>
+<meta http-equiv="refresh" content="0;url=/Zia/dungeon-reborn/game/?v=20260901-fix2">
+<title>地下城重生｜正在進入</title>
 <style>
-*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#07050d;color:#f3e7c5;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans TC",sans-serif}body{display:grid;place-items:center;background:radial-gradient(circle at 50% 35%,#24113e 0,#0d0917 48%,#050408 100%)}.box{width:min(88vw,430px);text-align:center;padding:28px 22px;border:1px solid #7652a3;border-radius:18px;background:rgba(12,8,22,.9);box-shadow:0 0 46px #6e33ab44,inset 0 0 28px #000}.gem{font-size:46px;filter:drop-shadow(0 0 12px #a251ff);animation:pulse 1.3s infinite}.title{font-size:28px;font-weight:900;letter-spacing:3px;color:#f4c66a;text-shadow:0 2px #472312,0 0 16px #e58b3744;margin:8px 0}.sub{font-size:13px;color:#bcaacf;margin-bottom:21px}.bar{height:12px;border:1px solid #6e538c;background:#0a0710;border-radius:20px;overflow:hidden}.fill{height:100%;width:4%;background:linear-gradient(90deg,#7545c7,#d05cff,#f7c363);box-shadow:0 0 14px #be62ff;transition:width .25s}.msg{font-size:14px;margin-top:13px;color:#dfd4ec;min-height:22px}.help{font-size:12px;color:#887b99;margin-top:17px;line-height:1.6}button{display:none;margin:18px auto 0;border:1px solid #c798ff;background:#6134a0;color:#fff;padding:12px 22px;border-radius:12px;font-weight:800;font-size:16px}@keyframes pulse{50%{transform:scale(1.08);filter:drop-shadow(0 0 22px #be5cff)}}
+html,body{height:100%;margin:0;background:#08050d;color:#f4c66a;font-family:-apple-system,BlinkMacSystemFont,"PingFang TC",sans-serif}body{display:grid;place-items:center;text-align:center;background:radial-gradient(circle at 50% 42%,#32164a,#08050d 68%)}.gem{width:42px;height:42px;margin:0 auto 24px;background:#a35be9;transform:rotate(45deg);box-shadow:0 0 32px #a35be9;animation:p .7s infinite alternate}b{font-size:22px;letter-spacing:2px}small{display:block;margin-top:14px;color:#bdaac8}a{color:#f4c66a}@keyframes p{to{transform:rotate(45deg) scale(1.18);filter:brightness(1.4)}}
 </style>
 </head>
 <body>
-<main class="box" id="loading"><div class="gem">◆</div><div class="title">地下城重生</div><div class="sub">POLISHED MOBILE EDITION</div><div class="bar"><div class="fill" id="fill"></div></div><div class="msg" id="msg">準備地下城資源…</div><button id="retry" onclick="location.reload()">重新載入</button><div class="help">第一次載入需要網路。進入遊戲後請將手機橫放，並使用 Safari 開啟可獲得最佳效果。</div></main>
-<script>
-(()=>{
- const fill=document.querySelector('#fill'),msg=document.querySelector('#msg'),retry=document.querySelector('#retry');
- const parts=Array.from({length:8},(_,i)=>`part-${String(i).padStart(2,'0')}.js`);
- let n=0;window.__DR_GZ='';
- const fail=(text)=>{msg.textContent=text;fill.style.width='100%';fill.style.background='#9c334b';retry.style.display='block'};
- const loadNext=()=>{
-  if(n>=parts.length){unpack();return}
-  msg.textContent=`載入遊戲資料 ${n+1} / ${parts.length}`;fill.style.width=`${6+(n/parts.length)*70}%`;
-  const s=document.createElement('script');s.src=parts[n]+'?v=20260901';s.async=false;
-  s.onload=()=>{n++;loadNext()};s.onerror=()=>fail(`遊戲資料 ${n+1} 載入失敗，請檢查網路後重試`);document.head.appendChild(s)
- };
- async function unpack(){
-  try{
-   msg.textContent='正在解封地下城…';fill.style.width='82%';
-   if(!window.__DR_GZ||window.__DR_GZ.length<1000)throw new Error('遊戲資料不完整');
-   const raw=atob(window.__DR_GZ),bytes=new Uint8Array(raw.length);
-   for(let i=0;i<raw.length;i++)bytes[i]=raw.charCodeAt(i);
-   let html;
-   if('DecompressionStream' in window){
-    const stream=new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
-    html=await new Response(stream).text();
-   }else{
-    msg.textContent='安裝相容解壓模組…';
-    await new Promise((ok,no)=>{const p=document.createElement('script');p.src='https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js';p.onload=ok;p.onerror=no;document.head.appendChild(p)});
-    html=new TextDecoder().decode(window.pako.ungzip(bytes));
-   }
-   fill.style.width='100%';msg.textContent='進入地下城';
-   sessionStorage.setItem('dr-mobile-loaded','1');
-   setTimeout(()=>{document.open();document.write(html);document.close()},120);
-  }catch(e){console.error(e);fail('手機版解壓失敗，請按重新載入')}
- }
- loadNext();
-})();
-</script>
+<main><div class="gem"></div><b>正在開啟地下城</b><small>若沒有自動跳轉，<a href="/Zia/dungeon-reborn/game/?v=20260901-fix2">點這裡進入</a></small></main>
+<script>location.replace('/Zia/dungeon-reborn/game/?v=20260901-fix2')</script>
 </body>
 </html>
