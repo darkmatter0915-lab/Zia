@@ -78,7 +78,7 @@ UpperLeg_R, LowerLeg_R, Foot_R, Toe_R
 - [ ] Greatsword 不受角色 Skin Weight 影響。
 - [ ] Greatsword Mesh 的 Bind Pose 世界 Transform 可逆且非奇異，`WeaponSocket_R` 至 Mesh 的祖先沒有零縮放／退化矩陣。
 - [ ] 所有 Clip 中 `WeaponSocket_R`／Greatsword 子樹的 Scale 維持 Bind 值。
-- [ ] 武器子樹相對 Bind Pose／Clip 首幀的局部平移未超過 50 cm；超過 10 cm 的警告均已記錄並人工確認不會移出鏡頭。
+- [ ] 武器子樹 translation 經完整祖先 Transform 合成後，相對同時間「武器 translation 還原 Bind 值」的世界空間影響未超過 50 cm；超過 10 cm 的警告均已記錄並人工確認不會移出鏡頭，正常手臂動作未被誤算。
 - [ ] `Sword_Base`／`Sword_Tip`（若採用）位於武器子樹、跟隨武器且可定義有效劍刃區段。
 - [ ] 大劍在 `Attack1`、`Attack2`、`Attack3` 的固定遊戲鏡頭中均可辨識。
 
@@ -95,7 +95,7 @@ Idle, Run, Attack1, Attack2, Attack3, Dodge, Hit, Death
 - [ ] 不存在以 `idle`、`Run.001`、`Attack_01`、`mixamo.com`、`Take 001` 等錯誤名稱替代必要 Clip 的情況。
 - [ ] 額外 Clip（若有）已在技術報告申報，且不取代或重名 8 個必要 Clip。
 - [ ] 所有 Clip 均有非空且唯一的名稱；每個必要 Clip 至少驅動一個實際人體 Skin Joint，而非只驅動披風、武器或 VFX。
-- [ ] 每個非 `Idle` 必要 Clip 均以至少 1° 旋轉或 1 cm 位移的有效幅度，驅動至少 1% 以非退化可見三角形表面積加權的人體蒙皮；不是空 Key、微小抖動或極低表面覆蓋的假動畫。
+- [ ] 每個非 `Idle` 必要 Clip 均讓至少 1% 以非退化可見三角形表面積加權的人體蒙皮，其直接受權重 Joint 在完整父子階層合成後仍產生至少 1° 世界姿勢旋轉或 1 cm 世界位移；不是空 Key、微小抖動、極低表面覆蓋或父子曲線互相抵銷的假動畫。
 - [ ] `Attack1`～`Attack3` 依各自插值在正規化時間軸重採樣後，實際人體姿勢仍互不相同；差異不是只來自 Key 數／時間、四元數正負號、VFX 或空節點。
 - [ ] 動畫至少以 30 FPS 烘焙（建議項目），或技術報告已說明實際 FPS。
 - [ ] 所有 Constraint、IK 與控制器已 Bake 到骨骼。
@@ -199,7 +199,8 @@ Greatsword_AO.png
 - [ ] Emissive 使用 sRGB。
 - [ ] Normal、Metallic、Roughness、AO 使用 Linear。
 - [ ] 紅色能量裂紋主要存在於 Emissive Map，而非只畫在 Base Color。
-- [ ] 角色實際使用的材質至少一個引用可解析到實際 Image source 的 Emissive Texture；Emissive Factor × `KHR_materials_emissive_strength` 大於 0，且至少一個貼圖像素在與非零 Factor 色頻相乘後仍非黑。
+- [ ] 角色實際使用的材質至少一個引用可解析到實際 Image source 的 Emissive Texture；Emissive Factor × `KHR_materials_emissive_strength` 大於 0，且實際可見三角形會取樣到啟用色頻中的非黑 texel。
+- [ ] 若 Emissive Texture 同時含黑色與非黑色 texel，已依實際 UV、`KHR_texture_transform` 與 Sampler wrap／filter 提供取樣證據；未以整張影像的 channel max 冒充裂紋可見。
 - [ ] 所有 active PBR TextureInfo 均解析到存在且格式一致的 Image source，沒有空 Texture definition。
 - [ ] GLB 影像僅使用約定的 PNG，或在 Web 版使用 KTX2；沒有以 JPEG／WebP 取代。
 - [ ] 若 Web 版使用 ORM Packed Map／KTX2，仍保留全部原始獨立 PNG。
