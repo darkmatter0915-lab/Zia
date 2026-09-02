@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="zh-Hant" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <meta name="description" content="Dungeon Reborn Warrior Asset Lab and GLB validator." />
+    <meta name="theme-color" content="#050409" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval' https://esm.sh; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://esm.sh https://cdn.jsdelivr.net https://www.gstatic.com; worker-src 'self' blob:; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'"
+    />
+    <title>Warrior Asset Lab | Dungeon Reborn</title>
+  </head>
+  <body>
+    <div id="app" class="app-shell">
+      <header class="lab-header">
+        <div class="brand-block">
+          <span class="brand-rune" aria-hidden="true">◆</span>
+          <div>
+            <p class="eyebrow">DUNGEON REBORN • THREE.JS PIPELINE</p>
+            <h1>Warrior Asset Lab</h1>
+          </div>
+        </div>
+        <div class="header-status">
+          <span id="engineBadge" class="status-badge status-loading">ENGINE_LOADING</span>
+          <span id="assetBadge" class="status-badge status-waiting">WAITING_FOR_WARRIOR_ASSET</span>
+        </div>
+      </header>
+
+      <main class="workspace">
+        <section class="viewport-panel gothic-panel" aria-label="Three.js 3D validator viewport">
+          <div class="viewport-toolbar">
+            <div>
+              <span class="panel-kicker">FIXED 3/4 PERSPECTIVE CAMERA</span>
+              <strong id="viewportTitle">DEBUG SCENE • NO CHARACTER ASSET</strong>
+            </div>
+            <div class="toolbar-actions">
+              <button id="retryAssetButton" class="tool-button" type="button">重新檢查 GLB</button>
+              <button id="resetCameraButton" class="tool-button" type="button" disabled>重設鏡頭</button>
+            </div>
+          </div>
+          <div id="canvasHost" class="canvas-host">
+            <canvas id="assetCanvas" aria-label="Warrior GLB preview canvas"></canvas>
+            <div class="debug-watermark" aria-hidden="true">
+              <span>DEBUG</span>
+              <small>Grid / Plane / Helper only</small>
+            </div>
+            <div id="loadingOverlay" class="loading-overlay" hidden>
+              <div class="loading-glyph" aria-hidden="true">◇</div>
+              <strong id="loadingLabel">載入資產</strong>
+              <div class="loading-track"><i id="loadingFill"></i></div>
+            </div>
+            <div id="rendererError" class="renderer-error" hidden>
+              <strong>WEBGL_RENDERER_UNAVAILABLE</strong>
+              <p id="rendererErrorMessage">目前瀏覽器無法建立 WebGL Renderer。</p>
+            </div>
+          </div>
+          <footer class="viewport-footer">
+            <div>
+              <span>正式資產路徑</span>
+              <code id="assetPathLabel"></code>
+            </div>
+            <div class="renderer-facts" id="rendererFacts">
+              <span>Renderer: 初始化中</span>
+              <span>Pixel ratio: -</span>
+              <span>Shadow: -</span>
+            </div>
+          </footer>
+        </section>
+
+        <aside class="validator-panel gothic-panel" aria-label="Warrior GLB validation report">
+          <div class="validator-heading">
+            <div>
+              <span class="panel-kicker">GLB ASSET VALIDATOR</span>
+              <h2 id="reportTitle">等待正式 warrior.glb</h2>
+            </div>
+            <span id="scoreBadge" class="score-badge">0 / 15</span>
+          </div>
+
+          <section class="pipeline-strip" aria-label="Loader integration status">
+            <span id="loaderGltf" class="pipeline-chip">GLTFLoader</span>
+            <span id="loaderDraco" class="pipeline-chip">DRACOLoader</span>
+            <span id="loaderKtx" class="pipeline-chip">KTX2Loader</span>
+            <span id="loaderMeshopt" class="pipeline-chip">MeshoptDecoder</span>
+          </section>
+
+          <section id="waitingCard" class="waiting-card">
+            <strong>WAITING_FOR_WARRIOR_ASSET</strong>
+            <p>目前未放入正式角色。此頁只顯示工程用 DEBUG 地板、Grid 與光源，不會建立假 GLB、primitive 人形或退役角色實作。</p>
+            <code>public/assets/characters/warrior/warrior.glb</code>
+          </section>
+
+          <section class="metrics-section">
+            <div class="section-title">
+              <h3>資產檢查項目</h3>
+              <span id="validationTimestamp">尚未驗證</span>
+            </div>
+            <dl id="metricsList" class="metrics-list"></dl>
+          </section>
+
+          <section class="animation-section">
+            <div class="section-title">
+              <h3>AnimationMixer Mapping</h3>
+              <span id="animationSummary">0 / 8</span>
+            </div>
+            <div id="animationControls" class="animation-controls"></div>
+          </section>
+
+          <section class="log-section">
+            <div class="section-title">
+              <h3>Validator Log</h3>
+              <button id="copyReportButton" class="text-button" type="button" disabled>複製報告</button>
+            </div>
+            <pre id="validatorLog">Asset Lab booting...</pre>
+          </section>
+        </aside>
+      </main>
+
+      <div class="orientation-gate" aria-hidden="true">
+        <div class="phone-icon"><i></i></div>
+        <strong>請將 iPhone 橫放</strong>
+        <span>Warrior Asset Lab 以手機橫向 16:9 驗證。</span>
+      </div>
+    </div>
+
+    <script type="module" src="/src/warrior-asset-lab/main.js"></script>
+  </body>
+</html>
