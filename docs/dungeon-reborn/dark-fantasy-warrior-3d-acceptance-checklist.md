@@ -1,10 +1,10 @@
 # Dark Fantasy Warrior 最終驗收清單
 
-> 專案：Dark Fantasy Warrior  
-> 交付版本／批次：`[待填]`  
-> 交付日期：`[YYYY-MM-DD]`  
-> 承製方：`[待填]`  
-> 驗收方：`[待填]`  
+> 專案：Dark Fantasy Warrior<br>
+> 交付版本／批次：`[待填]`<br>
+> 交付日期：`[YYYY-MM-DD]`<br>
+> 承製方：`[待填]`<br>
+> 驗收方：`[待填]`<br>
 > 驗收環境：`[DCC／OS／瀏覽器／裝置與版本]`
 
 ## 驗收結果標記
@@ -270,6 +270,6 @@ glTF Validator 報告位置：`[待填]`
 [待填]
 ```
 
-驗收方簽署：`[待填]`  
+驗收方簽署：`[待填]`<br>
 日期：`[YYYY-MM-DD]`
 
