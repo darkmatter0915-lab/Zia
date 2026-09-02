@@ -103,7 +103,7 @@ VFX_Foot_R
 - Greatsword 不可受角色 Skin Weight 影響。
 - Greatsword 不可與身體或披風共用同一 Mesh definition。
 - Greatsword Mesh 的 Bind Pose 世界 Transform 必須可逆且不可奇異；`WeaponSocket_R` 至 Mesh 之間任一祖先不得以零縮放或退化矩陣隱藏問題。
-- 動畫期間，`WeaponSocket_R`／Greatsword 子樹的 Scale 必須維持 Bind 值；相對 Bind Pose 或該 Clip 首幀的局部平移超過 10 cm 會列為警告，超過 50 cm 為硬性失敗。
+- 動畫期間，`WeaponSocket_R`／Greatsword 子樹的 Scale 必須維持 Bind 值。武器子樹 translation 會以完整祖先 Transform 合成後的世界空間影響驗收：同一時間比較實際姿勢與「僅將武器子樹 translation 還原 Bind 值」的反事實姿勢，差異超過 10 cm 會列為警告，超過 50 cm 為硬性失敗；正常手臂揮劍動作因同時存在於兩者而不計入。
 - 大劍在每個攻擊動作與固定遊戲鏡頭中必須保持可辨識。
 
 ## 7. 動畫 Clip
@@ -133,7 +133,7 @@ Take 001
 
 動畫建議至少以 30 FPS 烘焙。所有 Constraint、IK 與控制器必須 Bake 到骨骼；GLB 不可依賴 Blender 或 Maya 專屬控制器。
 
-每個必要 Clip 至少須有一條作用於實際變形人體（非 Cape）的骨骼 Channel；不可只動畫武器、披風或 VFX 輔助節點。`Run`、`Attack1`～`Attack3`、`Dodge`、`Hit`、`Death` 必須以至少 1° 旋轉或 1 cm 位移的有效幅度，驅動至少 1% 以非退化可見三角形表面積加權的人體蒙皮；不可用全程相同的空 Key、極小抖動或只影響極少表面的骨骼冒充有效動畫。`Attack1`～`Attack3` 會依各自插值規則在正規化時間軸重採樣姿勢後比較；即使 Key 數、時間點或四元數正負號不同，若實際人體姿勢等效仍視為相同，不可只加不同 VFX／空節點曲線冒充差異。額外 Clip 可以保留，但必須具有非空且唯一的名稱，在 `technical_report.md` 申報，並於 `animation_events.json` 提供完整事件欄位；不得取代或重名上述 8 個 Clip。
+每個必要 Clip 至少須有一條作用於實際變形人體（非 Cape）的骨骼 Channel；不可只動畫武器、披風或 VFX 輔助節點。`Run`、`Attack1`～`Attack3`、`Dodge`、`Hit`、`Death` 必須讓至少 1% 以非退化可見三角形表面積加權的人體蒙皮，其直接受權重 Joint 在完整父子階層合成後仍產生至少 1° 世界姿勢旋轉或 1 cm 世界位移；父子反向曲線若在受權重 Joint 的世界姿勢互相抵銷，不得計為有效幅度。不可用全程相同的空 Key、極小抖動或只影響極少表面的骨骼冒充有效動畫。`Attack1`～`Attack3` 會依各自插值規則在正規化時間軸重採樣姿勢後比較；即使 Key 數、時間點或四元數正負號不同，若實際人體姿勢等效仍視為相同，不可只加不同 VFX／空節點曲線冒充差異。額外 Clip 可以保留，但必須具有非空且唯一的名稱，在 `technical_report.md` 申報，並於 `animation_events.json` 提供完整事件欄位；不得取代或重名上述 8 個 Clip。
 
 ## 8. In-place 動畫驗收
 
@@ -229,7 +229,7 @@ Greatsword_AO.png
 | Roughness | Linear |
 | AO | Linear |
 
-- 紅色能量裂紋必須主要存在於 Emissive Map，不可只畫死在 Base Color。`Warrior_Root` 實際渲染到的材質至少一個必須引用能解析到實際 Image source 的 Emissive Texture，且 Emissive Factor 與 `KHR_materials_emissive_strength`（若使用）相乘後必須大於 0；貼圖至少須有一個與非零 Factor 色頻相乘後仍為非黑的像素。空 Texture definition、全黑貼圖或 `emissiveStrength: 0` 均不合格；裂紋造型與實際亮度仍以固定鏡頭人工驗收。
+- 紅色能量裂紋必須主要存在於 Emissive Map，不可只畫死在 Base Color。`Warrior_Root` 實際渲染到的材質至少一個必須引用能解析到實際 Image source 的 Emissive Texture，且 Emissive Factor 與 `KHR_materials_emissive_strength`（若使用）相乘後必須大於 0。空 Texture definition、全黑貼圖或 `emissiveStrength: 0` 均不合格；若貼圖同時含黑色與非黑色 texel，必須依實際 UV、`KHR_texture_transform` 與 Sampler wrap／filter 證明可見三角形會取樣到啟用色頻中的非黑 texel，不能只以整張影像的 channel max 代替。未提供時維持 `INCOMPLETE`；裂紋造型與實際亮度仍以固定鏡頭人工驗收。
 - 所有 active material 已引用的 BaseColor、MetallicRoughness、Normal、AO、Emissive 與材質 extension Texture 均必須解析到存在且格式一致的 Image source；不可留下空 Texture definition。
 - 本案 GLB 影像格式限定為標準版 PNG、Web 部署版 PNG 或 KTX2；不接受 JPEG／WebP 取代約定貼圖。Web 最終版本可轉換成 ORM Packed Map 與 KTX2；原始交付仍須保留上述獨立 PNG。
 - 含混合透明度的 Alpha Mask／Alpha Blend 貼圖無法只靠像素極值證明實際表面可見；承製方必須在目標 Three.js Runtime 依實際 UV、Sampler wrap／filter、材質 Factor 與 Alpha Cutoff 提供畫面或量測證據。未提供時該項維持 `INCOMPLETE`，不視為自動通過。
