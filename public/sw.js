@@ -1,4 +1,5 @@
-const CACHE = 'zia-runtime-v1'
+const CACHE_PREFIX = 'zia-runtime-'
+const CACHE = `${CACHE_PREFIX}v1`
 const scope = self.registration.scope
 const core = [
   new URL('./', scope).href,
@@ -14,7 +15,11 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys()
-      .then((keys) => Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key))))
+      .then((keys) => Promise.all(
+        keys
+          .filter((key) => key.startsWith(CACHE_PREFIX) && key !== CACHE)
+          .map((key) => caches.delete(key)),
+      ))
       .then(() => self.clients.claim()),
   )
 })
