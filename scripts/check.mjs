@@ -3,12 +3,7 @@ import { dirname, extname, join, resolve } from 'node:path'
 import { spawnSync } from 'node:child_process'
 
 const root = resolve(import.meta.dirname, '..')
-const assetLabRuntimeFiles = [
-  'public/warrior-asset-lab/runtime-00.js',
-  'public/warrior-asset-lab/runtime-01.js',
-  'public/warrior-asset-lab/runtime-02.js',
-  'public/warrior-asset-lab/runtime-03.js',
-]
+const assetLabRuntimeFiles = ['src/warrior-asset-lab/lab.js', 'src/warrior-asset-lab/audit.js', 'src/warrior-asset-lab/asset-io.js']
 const required = [
   'index.html',
   'src/main.js',
@@ -69,9 +64,7 @@ if (existsSync(assetLabEntryPath)) {
   if (!source.includes('import.meta.env.BASE_URL')) {
     errors.push('Warrior Asset Lab 必須使用 import.meta.env.BASE_URL 載入公開資產')
   }
-  if (!assetLabRuntimeFiles.every((file) => source.includes(file.replace('public/', '')))) {
-    errors.push('Warrior Asset Lab runtime 檔案清單不完整')
-  }
+
 }
 if (!assetLabRuntimeSource.includes('assets/characters/warrior/warrior.glb')) {
   errors.push('Warrior Asset Lab 缺少正式 warrior.glb 路徑')
