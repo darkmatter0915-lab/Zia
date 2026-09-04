@@ -1,0 +1,50 @@
+name: Migrate and verify Warrior Asset Lab
+on:
+  push:
+    branches: [fix/warrior-lab-hardening-20260905]
+    paths: [scripts/upgrade-lab.mjs, .github/workflows/upgrade-lab.yml]
+permissions:
+  contents: write
+jobs:
+  upgrade:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/warrior-lab-hardening-20260905
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apply readable source migration
+        run: |
+          node scripts/upgrade-lab.mjs
+          npm install --package-lock-only --ignore-scripts --no-audit
+          rm scripts/upgrade-lab.mjs
+          git add -A
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'Harden Warrior Asset Lab source, validators, mobile input and legacy isolation'
+          git push origin HEAD:fix/warrior-lab-hardening-20260905
+          git rev-parse HEAD > /tmp/verified-source-sha.txt
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+      - run: npm run verify:dist
+      - run: npx playwright install --with-deps chromium webkit
+      - run: npm run test:browser
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lab-test-evidence
+          path: |
+            test-results/
+            /tmp/verified-source-sha.txt
+          retention-days: 7
+      - name: Package exact source and build for review
+        if: always()
+        run: tar -czf /tmp/lab-verified-source.tgz --exclude='./.git' --exclude='./node_modules' .
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lab-verified-source
+          path: /tmp/lab-verified-source.tgz
+          retention-days: 7
