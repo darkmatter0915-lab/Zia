@@ -10,7 +10,7 @@
     <meta name="format-detection" content="telephone=no" />
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval' https://esm.sh; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://esm.sh https://cdn.jsdelivr.net https://www.gstatic.com; worker-src 'self' blob:; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'"
+      content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; worker-src 'self' blob:; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'"
     />
     <title>Warrior Asset Lab | Dungeon Reborn</title>
   </head>
@@ -38,7 +38,7 @@
               <strong id="viewportTitle">DEBUG SCENE • NO CHARACTER ASSET</strong>
             </div>
             <div class="toolbar-actions">
-              <button id="retryAssetButton" class="tool-button" type="button">重新檢查 GLB</button>
+              <button id="retryAssetButton" class="tool-button" type="button" disabled>重新檢查 GLB</button>
               <button id="resetCameraButton" class="tool-button" type="button" disabled>重設鏡頭</button>
             </div>
           </div>
@@ -46,13 +46,14 @@
             <canvas id="assetCanvas" aria-label="Warrior GLB preview canvas"></canvas>
             <div class="debug-watermark" aria-hidden="true">
               <span>DEBUG</span>
-              <small>Grid / Plane / Helper only</small>
+              <small>僅工程地板；不是遊戲美術</small>
             </div>
             <div id="loadingOverlay" class="loading-overlay" hidden>
               <div class="loading-glyph" aria-hidden="true">◇</div>
               <strong id="loadingLabel">載入資產</strong>
               <div class="loading-track"><i id="loadingFill"></i></div>
             </div>
+            <div class="touch-diagnostic"><button id="touchLeft" type="button">左手測試</button><output id="touchResult">DEBUG TOUCH</output><button id="touchRight" type="button">右手測試</button></div>
             <div id="rendererError" class="renderer-error" hidden>
               <strong>WEBGL_RENDERER_UNAVAILABLE</strong>
               <p id="rendererErrorMessage">目前瀏覽器無法建立 WebGL Renderer。</p>
@@ -119,7 +120,7 @@
         </aside>
       </main>
 
-      <div class="orientation-gate" aria-hidden="true">
+      <div class="orientation-gate" role="status">
         <div class="phone-icon"><i></i></div>
         <strong>請將 iPhone 橫放</strong>
         <span>Warrior Asset Lab 以手機橫向 16:9 驗證。</span>
