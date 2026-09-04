@@ -1,0 +1,28 @@
+name: Prepare lab verification dependencies
+on:
+  push:
+    branches: [fix/warrior-lab-hardening-20260905]
+    paths: [.github/workflows/lab-dependencies.yml]
+permissions:
+  contents: read
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npm install --save-exact three@0.185.1
+      - run: npm install --save-dev --save-exact @playwright/test@1.58.2
+      - name: Package reproducible local verification workspace
+        run: tar -czf /tmp/lab-workspace.tgz --exclude=.git --exclude=dist .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lab-verification-workspace
+          path: /tmp/lab-workspace.tgz
+          retention-days: 1
