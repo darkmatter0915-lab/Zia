@@ -1,0 +1,34 @@
+name: Verify Workspace UI
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'public/sw.js'
+      - 'scripts/test-workspace.mjs'
+      - '.github/workflows/workspace-ui-checks.yml'
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'public/sw.js'
+      - 'scripts/test-workspace.mjs'
+      - '.github/workflows/workspace-ui-checks.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Run workspace regression tests
+        run: node --test scripts/test-workspace.mjs
+      - name: Check workspace JavaScript syntax
+        run: |
+          node --check src/workspace.js
+          node --check src/workspace-home.js
+          node --check src/workspace-icons.js
+          node --check public/sw.js

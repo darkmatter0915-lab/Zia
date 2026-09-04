@@ -1,5 +1,6 @@
 import './style.css'
-import { ZiaApp } from './app.js'
+import './workspace.css'
+import { WorkspaceApp as ZiaApp } from './workspace.js'
 import { createStore } from './store.js'
 
 const root = document.querySelector('#app')
