@@ -1,0 +1,21 @@
+name: Export combat baseline
+on:
+  push:
+    branches: [feat/warrior-combat-core-20260905]
+    paths: [.github/workflows/export-combat-baseline.yml]
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - run: git archive --format=tar.gz HEAD > /tmp/combat-baseline.tar.gz
+      - uses: actions/upload-artifact@v4
+        with:
+          name: combat-baseline
+          path: /tmp/combat-baseline.tar.gz
+          retention-days: 1
