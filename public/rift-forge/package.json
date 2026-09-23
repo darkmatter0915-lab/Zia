@@ -1,0 +1,1 @@
+{"name":"rift-forge","private":true,"version":"0.1.0","type":"commonjs","description":"Independent ricochet roguelite research slice","scripts":{"test":"node --test tests/engine.test.cjs"},"engines":{"node":">=18"}}

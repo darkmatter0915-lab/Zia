@@ -1,0 +1,9 @@
+{
+  "version": "0.1.0",
+  "date": "2026-09-23",
+  "unit_tests": {"passed": 26, "failed": 0, "command": "node --test tests/engine.test.cjs"},
+  "normal_rule_bot_runs": {"seeds": 24, "wins": 24, "starting_meta": 0, "forced_healing_or_kills": false, "purpose": "One strategy can complete the full loop, not player win rate or balance proof"},
+  "browser": {"engine": "Chromium", "viewports": [[1440,900],[926,428],[430,932]], "touch_cases": 2, "page_errors": [], "execution": "offline set_content", "storage": "explicit in-memory test adapter; real persistent localStorage NOT verified", "ui_branch_checks_use_state_injection": true},
+  "not_verified": ["Safari/WebKit", "physical iPhone 13 Pro Max", "device heat and FPS", "real browser persistent storage", "production deployment at time of this manifest", "human playtest and balance", "complete frame-by-frame original video analysis"],
+  "source_git_blob_sha": {"engine.js": "0db1f9dd847bdc080b7bce6cfd907b5fc90955f1", "render.js": "d6baf1c5d646915c8c62113197466e32024a4358", "app.js": "d57106fd8c691280b48bbae6b2fed13bf937f6e8", "style.css": "b50d71867e03c91f9d5d50d1412e9d76863c993d"}
+}
