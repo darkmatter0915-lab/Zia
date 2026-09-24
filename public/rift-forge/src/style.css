@@ -4,8 +4,8 @@
 @media(max-width:650px) and (orientation:portrait){#rotate{display:block}.stats .wordmark{display:none}.controls button{padding:7px;min-width:40px}.vital{width:108px}.stats{padding:8px;gap:6px;font-size:12px}#dock{flex-wrap:wrap;justify-content:center}.deck{width:100%;justify-content:center}.core{min-width:70px;padding:5px}.core .name{font-size:10px}.core .gem{display:none}.cards{grid-template-columns:1fr;gap:10px}.choice{min-height:130px;padding:15px 15px 15px 75px}.choice .symbol{position:absolute;left:14px;top:21px;width:42px;height:42px;font-size:22px}.choice .next{padding-top:8px}.panel{padding:22px}.info-grid{grid-template-columns:1fr}.kpi>div{padding:10px}.kpi strong{font-size:23px}.recipe{grid-template-columns:1fr}.home{width:100%}.home h1{font-size:45px}.home .lead{font-size:14px}.moves{display:flex}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}#layer{backdrop-filter:none}}
 /* v0.2 art direction: painted scenes frame the original canvas game. */
-#layer:has(.home){background:linear-gradient(90deg,#06101bd9 0%,#06101b6b 48%,#06101b17 100%),url('../assets/expedition.webp') center center/cover no-repeat;backdrop-filter:none}
-#layer:has(.base-panel){background:linear-gradient(90deg,#06101be0,#06101b6b),url('../assets/foundry.webp') center/cover no-repeat;backdrop-filter:none}
+#layer:has(.home){background:linear-gradient(90deg,#06101bd9 0%,#06101b6b 48%,#06101b17 100%),url('../assets/expedition.webp?v=e957b55d37d7') center center/cover no-repeat;backdrop-filter:none}
+#layer:has(.base-panel){background:linear-gradient(90deg,#06101be0,#06101b6b),url('../assets/foundry.webp?v=2f7e3585469a') center/cover no-repeat;backdrop-filter:none}
 .panel{border-color:#806b51;background:linear-gradient(145deg,#152b38fa,#0a1723f8);box-shadow:0 35px 100px #000b, inset 0 1px #d6b0782b}
 .home{border:1px solid #a17b4b99;background:linear-gradient(115deg,#0c1b29f4,#102735e0);box-shadow:0 30px 90px #000b,inset 0 1px #f4d2a343}
 .home h1{color:#f9edda;text-shadow:0 3px 24px #e8a8623d}
@@ -24,7 +24,7 @@
 @media(max-height:500px){#boss-reveal{top:15%;width:min(450px,65vw)}#boss-reveal img{width:62px;height:62px}#boss-reveal strong{font-size:21px}.home{margin-left:3vw}.base-panel{max-width:600px}}
 @media(max-width:650px) and (orientation:portrait){#layer:has(.home){background-position:64% center}.home{background:#0c1b29eb}.choice .symbol{width:48px;height:48px}.base-panel{margin:0}}
 @media(prefers-reduced-motion:reduce){#pulse.ready:before{animation:none}#boss-reveal{transition:none}}
-.boss-result{height:110px;margin:14px 0 20px;border:1px solid #815b4a;background:linear-gradient(90deg,#0b1825f0 0%,#0b182500 72%),url('../assets/bell-guardian.webp') center 39%/cover;box-shadow:inset 0 0 30px #091321}
+.boss-result{height:110px;margin:14px 0 20px;border:1px solid #815b4a;background:linear-gradient(90deg,#0b1825f0 0%,#0b182500 72%),url('../assets/bell-guardian.webp?v=116a15b7ee52') center 39%/cover;box-shadow:inset 0 0 30px #091321}
 @media(max-height:500px){.boss-result{height:65px;margin:8px 0}}
 @media(max-width:650px) and (orientation:portrait){.boss-result{height:85px}}
 .choice .synergy{font-size:11px;color:#c9e2d2;border-left:2px solid var(--core,#d9b580);padding-left:8px;margin-top:12px;line-height:1.45}
@@ -39,3 +39,18 @@
 #asset-status button{margin-left:8px}#boss-reveal{visibility:hidden}#boss-reveal.on{visibility:visible}
 @media(max-height:500px){.vital{width:180px}.choice .symbol{width:46px;height:46px}.core .gem img{width:43px;height:43px}#asset-status{margin-top:8px}}
 @media(max-width:650px) and (orientation:portrait){.vital{width:84px}.vital strong{grid-column:1/-1}.controls button{padding:7px 6px;font-size:11px}.choice .symbol{width:46px;height:46px;margin:0}#rotate{top:calc(50% + 34vw);bottom:auto;white-space:nowrap}}
+/* v0.4: safe controls outside the camera, with one pointer per thumb. */
+:root{--safe-x:max(14px,env(safe-area-inset-left),env(safe-area-inset-right))}
+#hud,#dock{width:min(930px,calc(100% - var(--safe-x) - var(--safe-x)))}
+.controls button{min-height:44px}#dock{bottom:max(8px,env(safe-area-inset-bottom))}
+#move-rail{display:none;position:relative;width:132px;height:54px;border:1px solid #6a8d91;border-radius:28px;background:linear-gradient(#183642,#0b1e29);box-shadow:inset 0 2px 10px #02090b80;touch-action:none;--thumb-x:0px}
+#move-rail:before{content:'';position:absolute;left:18px;right:18px;top:25px;height:2px;background:#789b9d70}
+#move-rail i{position:absolute;top:5px;left:calc(50% - 21px);width:42px;height:42px;border:1px solid #9fc9c6;border-radius:50%;background:radial-gradient(circle at 38% 30%,#a4cccb,#3f6c78 48%,#1e3948);box-shadow:0 2px 9px #0009;transform:translateX(var(--thumb-x));pointer-events:none}
+#move-rail i:after{content:'‹ ›';display:grid;place-items:center;height:100%;color:#eff9ef;font-size:20px;word-spacing:8px}
+#move-rail.active{border-color:#eed59c;box-shadow:0 0 16px #9ccdcc36}.rail-label{position:absolute;top:-20px;left:0;width:100%;text-align:center;font-size:10px;letter-spacing:.12em;color:#b7c9ca;pointer-events:none}
+@media(any-pointer:coarse){body:not([data-controls="buttons"]) #move-rail{display:block}body:not([data-controls="buttons"]) .moves button{display:none}.actions button{min-height:50px;min-width:46px}.moves button{width:52px;min-height:52px}}
+@media(max-height:520px){#hud{top:max(5px,env(safe-area-inset-top))}#dock{bottom:max(5px,env(safe-area-inset-bottom))}.core{min-width:84px;padding:5px}.core .name{font-size:10px}.core .gem img{width:40px;height:40px}}
+@media(max-width:760px) and (orientation:landscape){.vital{width:135px}.vital .wordmark{font-size:8px}.stats{font-size:11px;padding:5px 8px}.core{min-width:50px;padding:4px;gap:2px}.core .gem{width:18px;height:18px}.core .name{display:none}.core .lv{font-size:8px;letter-spacing:0}.actions button{padding:7px;font-size:11px}#move-rail{width:114px}.deck{gap:4px}#dock{gap:6px}}
+@media(max-width:650px) and (orientation:portrait){#dock{gap:12px;align-items:center;justify-content:space-between}.deck{order:1}.moves{order:2}.actions{order:3}.rail-label{display:none}#rotate{top:calc(var(--arena-bottom,60vh) + 12px);bottom:auto}.core{min-width:70px}}
+@media(max-width:420px) and (orientation:portrait){.vital{width:70px}.controls{gap:4px}.controls button{font-size:10px;padding:7px 5px}}
+@media(max-width:760px) and (orientation:landscape){.vital .wordmark{white-space:nowrap;letter-spacing:.13em}}

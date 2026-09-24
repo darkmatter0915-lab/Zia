@@ -10,7 +10,7 @@
     "build": "npm run check && vite build",
     "preview": "vite preview",
     "predev": "node scripts/prepare-lab.mjs",
-    "prebuild": "node scripts/prepare-lab.mjs",
+    "prebuild": "node scripts/prepare-lab.mjs && node scripts/rift-forge/stamp-release.mjs --check",
     "test": "node --test tests/unit/*.test.js",
     "test:browser": "playwright test",
     "verify:dist": "node scripts/verify-lab-build.mjs"

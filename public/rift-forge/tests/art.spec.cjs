@@ -1,6 +1,6 @@
 const {test,expect}=require('@playwright/test');
 const fs=require('node:fs');
-const out='test-results/rift-forge';
+let out;
 async function boot(page){await page.goto('?qa=1');await expect(page.locator('#start')).toBeEnabled();}
 async function scene(page){await page.evaluate(()=>{
  const q=window.__RIFT,R=q.RF;q.start(false);q.freeze();const s=q.state;
@@ -13,7 +13,7 @@ async function scene(page){await page.evaluate(()=>{
  s.bullets.push({kind:'seer',x:550,y:360,vx:20,vy:150,r:5,life:5});
  });await expect(page.locator('#toast')).not.toHaveClass(/on/);
 }
-test.beforeAll(()=>fs.mkdirSync(out,{recursive:true}));
+test.beforeEach(({},info)=>{out=`test-results/rift-forge/${info.project.name}`;fs.mkdirSync(out,{recursive:true});});
 for(const [name,width,height] of [['desktop',1440,900],['mobile-landscape',926,428],['mobile-portrait',430,932]]){
  test(name+' combat art and UI fit',async({page})=>{
   const errors=[];page.on('pageerror',e=>errors.push(e.message));await page.setViewportSize({width,height});await boot(page);
@@ -31,12 +31,12 @@ for(const [name,width,height] of [['desktop',1440,900],['mobile-landscape',926,4
 }
 test('all five atlases decode with transparent gutters and all six key poses',async({page})=>{
  await boot(page);const results=await page.evaluate(async()=>{
-  const items=[];for(const name of ['hero','guard','runner','seer','boss']){const im=new Image();im.src=`./assets/sprites/${name}.webp`;await im.decode();const c=document.createElement('canvas');c.width=768;c.height=512;const x=c.getContext('2d');x.drawImage(im,0,0);const bytes=x.getImageData(0,0,768,512).data,counts=[];for(let f=0;f<6;f++){let visible=0;for(let y=0;y<256;y++)for(let xx=0;xx<256;xx++)if(bytes[((Math.floor(f/3)*256+y)*768+(f%3)*256+xx)*4+3]>128)visible++;counts.push(visible);}items.push({name,w:im.width,h:im.height,corner:bytes[3],counts});}return items;
+  const items=[];for(const name of ['hero','guard','runner','seer','boss']){const im=new Image();im.src=window.RIFT_RELEASE.sprites[name];await im.decode();const c=document.createElement('canvas');c.width=768;c.height=512;const x=c.getContext('2d');x.drawImage(im,0,0);const bytes=x.getImageData(0,0,768,512).data,counts=[];for(let f=0;f<6;f++){let visible=0;for(let y=0;y<256;y++)for(let xx=0;xx<256;xx++)if(bytes[((Math.floor(f/3)*256+y)*768+(f%3)*256+xx)*4+3]>128)visible++;counts.push(visible);}items.push({name,w:im.width,h:im.height,corner:bytes[3],counts});}return items;
  });for(const a of results){expect(a.w).toBe(768);expect(a.h).toBe(512);expect(a.corner).toBe(0);a.counts.forEach(n=>expect(n).toBeGreaterThan(1000));}
 });
 test('asset load failure blocks combat and retry recovers',async({page})=>{
- await page.route('**/assets/sprites/seer.webp',r=>r.abort());await page.goto('?qa=1');await expect(page.locator('#retry-assets')).toBeVisible();await expect(page.locator('#start')).toBeDisabled();
- await page.unroute('**/assets/sprites/seer.webp');await page.locator('#retry-assets').click();await expect(page.locator('#start')).toBeEnabled();await page.locator('#start').click();await expect(page.locator('#layer')).toBeHidden();
+ await page.route('**/assets/sprites/seer.webp*',r=>r.abort());await page.goto('?qa=1');await expect(page.locator('#retry-assets')).toBeVisible();await expect(page.locator('#start')).toBeDisabled();
+ await page.unroute('**/assets/sprites/seer.webp*');await page.locator('#retry-assets').click();await expect(page.locator('#start')).toBeEnabled();await page.locator('#start').click();await expect(page.locator('#layer')).toBeHidden();
 });
 test('boss cast, evolution effects, and terminal transition render without errors',async({page})=>{
  const errors=[];page.on('pageerror',e=>errors.push(e.message));await page.setViewportSize({width:1440,height:900});await boot(page);await scene(page);
@@ -50,11 +50,12 @@ test('movement stops on pause and legacy save resumes',async({page})=>{
  const x=await page.evaluate(()=>window.__RIFT.state.x);await page.waitForTimeout(200);expect(await page.evaluate(()=>window.__RIFT.state.x)).toBeCloseTo(x,1);
  await page.evaluate(()=>{const q=window.__RIFT,s=q.RF.snapshot(q.state);delete s.ghosts;delete s.fireAnim;delete s.moveDir;localStorage.setItem('rift-forge.v1.run',JSON.stringify(s));});await page.reload();await expect(page.locator('#resume')).toBeEnabled();await page.locator('#resume').click();await expect(page.locator('#layer')).toBeHidden();
 });
-test('bounded dense render benchmark',async({page})=>{
+test('bounded dense render benchmark',async({page},info)=>{
  await page.setViewportSize({width:926,height:428});await boot(page);await scene(page);
  const data=await page.evaluate(()=>{const q=window.__RIFT,R=q.RF,s=q.state;s.enemies=[];s.balls=[];s.fx=[];
  for(let i=0;i<70;i++)R.spawn(s,['guard','runner','seer'][i%3],145+i%10*74,125+Math.floor(i/10)*48);
  for(let i=0;i<140;i++)R.ball(s,Object.keys(R.TYPES)[i%9],2,125+i%20*37,180+Math.floor(i/20)*40,200,-400,10);
  const run=quality=>{q.renderer.setQuality(quality);const a=[];for(let i=0;i<60;i++){const t=performance.now();q.renderer.draw(s,42+i/60);a.push(performance.now()-t);}a.sort((x,y)=>x-y);return{quality,mean:a.reduce((x,y)=>x+y)/a.length,p95:a[Math.floor(a.length*.95)]};};return{device:'Chromium CI, 926x428, not physical iPhone',enemies:s.enemies.length,balls:s.balls.length,results:[run('full'),run('lite')]};});
+ data.device=`${info.project.name} CI, 926x428, not physical iPhone`;
  fs.writeFileSync(`${out}/render-benchmark.json`,JSON.stringify(data,null,2));expect(data.enemies).toBe(70);expect(data.balls).toBe(140);for(const r of data.results)expect(r.mean).toBeLessThan(120);
 });

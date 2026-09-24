@@ -31,6 +31,10 @@ jobs:
           npm run verify:dist | tee verification/output.log
       - run: npx playwright install --with-deps chromium webkit
       - run: npm run test:browser
+      - name: Verify Rift Forge art and returning-player updates
+        run: |
+          node --test public/rift-forge/tests/engine.test.cjs
+          npx playwright test --config=playwright.rift.config.cjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -53,6 +57,9 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/deploy-pages@v4
         id: deployment
       - name: Check published Asset Lab and manifest
@@ -66,6 +73,15 @@ jobs:
               cat /tmp/manifest.json
               exit 0
             fi
+            sleep 5
+          done
+          exit 1
+      - name: Verify published Rift Forge release and sprites
+        env:
+          SITE: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          for attempt in 1 2 3 4 5 6; do
+            if node scripts/rift-forge/verify-live.mjs; then exit 0; fi
             sleep 5
           done
           exit 1

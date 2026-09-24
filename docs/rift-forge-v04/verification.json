@@ -1,0 +1,21 @@
+{
+  "tested_commit": "267cb909b6c0c26e05e487e30d4711f33e14eaf2",
+  "workflow": "https://github.com/darkmatter0915-lab/Zia/actions/runs/35992611792",
+  "rules_passed": 30,
+  "build": "passed",
+  "browser": {
+    "startTime": "2026-09-24T11:23:04.139Z",
+    "duration": 118958.74500000001,
+    "expected": 28,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "projects": [
+    "Chromium",
+    "WebKit"
+  ],
+  "physical_device_tested": false,
+  "multitouch_test": "synthetic PointerEvent streams; native mouse drag is separately tested",
+  "screenshots": "QA scene with real renderer and touch layout"
+}
