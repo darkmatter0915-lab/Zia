@@ -5,8 +5,10 @@ async function start(page){await page.goto('?qa=1');await expect(page.locator('#
 async function pointer(page,selector,type,id,x,y){await page.locator(selector).dispatchEvent(type,{pointerId:id,pointerType:'touch',isPrimary:id===31,clientX:x,clientY:y,bubbles:true,cancelable:true,buttons:type==='pointerup'||type==='pointercancel'?0:1});}
 test('trusted drag stops on release, including release outside the rail',async({page})=>{
  await start(page);await page.evaluate(()=>{window.pointerTrace=[];for(const type of ['pointerdown','pointermove','pointerup','pointercancel','gotpointercapture','lostpointercapture','resize'])window.addEventListener(type,e=>window.pointerTrace.push({type,id:e.pointerId,x:e.clientX,target:e.target.id,buttons:e.buttons,time:window.__RIFT.state.time}),true);});const r=await page.locator('#move-rail').boundingBox(),before=await page.evaluate(()=>window.__RIFT.state.x);
- await page.mouse.move(r.x+r.width/2,r.y+r.height/2);await page.mouse.down();await page.mouse.move(r.x+r.width+70,r.y+r.height/2);await page.waitForTimeout(180);await page.mouse.up();
- const after=await page.evaluate(()=>window.__RIFT.state.x);if(after<=before+20)console.log('POINTER_TRACE',JSON.stringify(await page.evaluate(()=>window.pointerTrace)));expect(after).toBeGreaterThan(before+20);await page.waitForTimeout(180);expect(await page.evaluate(()=>window.__RIFT.state.x)).toBeCloseTo(after,1);
+ await page.mouse.move(r.x+r.width/2,r.y+r.height/2);await page.mouse.down();await page.mouse.move(r.x+r.width+70,r.y+r.height/2);
+ // Software WebKit may not deliver a frame inside a short wall-clock delay.
+ try{await expect.poll(()=>page.evaluate(()=>window.__RIFT.state.x)).toBeGreaterThan(before+20);}catch(e){console.log('POINTER_TRACE',JSON.stringify(await page.evaluate(()=>window.pointerTrace)));throw e;}finally{await page.mouse.up();}
+ const stopped=await page.evaluate(()=>({x:window.__RIFT.state.x,time:window.__RIFT.state.time}));await expect.poll(()=>page.evaluate(()=>window.__RIFT.state.time)).toBeGreaterThan(stopped.time+.15);expect(await page.evaluate(()=>window.__RIFT.state.x)).toBeCloseTo(stopped.x,1);
 });
 test('two pointer streams keep movement and aim independent, and cancel clears only its owner',async({page})=>{
  await start(page);const r=await page.locator('#move-rail').boundingBox(),v=await page.evaluate(()=>window.__RIFT.renderer.metrics.viewport);
