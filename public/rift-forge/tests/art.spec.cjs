@@ -1,6 +1,6 @@
 const {test,expect}=require('@playwright/test');
 const fs=require('node:fs');
-const out='test-results/rift-forge';
+let out;
 async function boot(page){await page.goto('?qa=1');await expect(page.locator('#start')).toBeEnabled();}
 async function scene(page){await page.evaluate(()=>{
  const q=window.__RIFT,R=q.RF;q.start(false);q.freeze();const s=q.state;
@@ -13,7 +13,7 @@ async function scene(page){await page.evaluate(()=>{
  s.bullets.push({kind:'seer',x:550,y:360,vx:20,vy:150,r:5,life:5});
  });await expect(page.locator('#toast')).not.toHaveClass(/on/);
 }
-test.beforeAll(()=>fs.mkdirSync(out,{recursive:true}));
+test.beforeEach(({},info)=>{out=`test-results/rift-forge/${info.project.name}`;fs.mkdirSync(out,{recursive:true});});
 for(const [name,width,height] of [['desktop',1440,900],['mobile-landscape',926,428],['mobile-portrait',430,932]]){
  test(name+' combat art and UI fit',async({page})=>{
   const errors=[];page.on('pageerror',e=>errors.push(e.message));await page.setViewportSize({width,height});await boot(page);

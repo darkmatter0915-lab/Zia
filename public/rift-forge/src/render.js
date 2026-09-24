@@ -26,7 +26,7 @@ function makeRenderer(canvas){
  const sprites={},flashSprites={},spriteNames=['hero','guard','runner','seer','boss'];
  const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
  let quality='full',drawCount=0,drawMs=0,terminalTime=null,previousState=null;
- const metrics={frames:0,averageDrawMs:0,quality:'full',assets:status};
+ const metrics={frames:0,drawCalls:0,averageDrawMs:0,quality:'full',assets:status,viewport:null};
  function load(){
   status.ready=false;status.failed=[];status.loaded=0;
   return Promise.all(spriteNames.map(name=>new Promise(resolve=>{
@@ -38,7 +38,16 @@ function makeRenderer(canvas){
   }))).then(results=>{status.ready=results.every(Boolean);return status.ready;});
  }
  const ready=load();
- function resize(){dpr=Math.min(window.devicePixelRatio||1,quality==='lite'?1.35:1.8);canvas.width=Math.round(innerWidth*dpr);canvas.height=Math.round(innerHeight*dpr);scale=Math.min(innerWidth/960,(innerHeight-(innerHeight<520?62:0))/600);ox=(innerWidth-960*scale)/2;oy=(innerHeight-600*scale)/2;}
+ function resize(){
+  dpr=Math.min(window.devicePixelRatio||1,quality==='lite'?1.35:1.8);const w=Math.round(innerWidth*dpr),h=Math.round(innerHeight*dpr);
+  if(canvas.width!==w)canvas.width=w;if(canvas.height!==h)canvas.height=h;
+  const hud=document.getElementById('hud').getBoundingClientRect(),dock=document.getElementById('dock').getBoundingClientRect();
+  if(hud.height&&dock.height){const top=hud.bottom+8,bottom=dock.top-10,margin=innerWidth<1100?Math.max(12,hud.left):20,worldWidth=innerHeight>innerWidth?776:840;
+   scale=Math.min((innerWidth-2*margin)/worldWidth,Math.max(80,bottom-top)/492);ox=innerWidth/2-480*scale;oy=top+(bottom-top-492*scale)/2-64*scale;
+  }else{scale=Math.min(innerWidth/960,innerHeight/600);ox=(innerWidth-960*scale)/2;oy=(innerHeight-600*scale)/2;}
+  metrics.viewport={left:ox+112*scale,right:ox+848*scale,top:oy+82*scale,bottom:oy+540*scale,scale};
+  document.documentElement.style.setProperty('--arena-bottom',metrics.viewport.bottom+'px');
+ }
  function point(x,y){return{x:(x-ox)/scale,y:(y-oy)/scale};}
  function setQuality(value){quality=value==='lite'?'lite':'full';metrics.quality=quality;resize();}
  const lights={};
@@ -121,7 +130,7 @@ function makeRenderer(canvas){
     else {c.lineWidth=Math.max(.6,remain*2);c.beginPath();c.moveTo(0,0);c.lineTo(5*remain,0);c.stroke();}c.restore();}
   }c.restore();
  }
- function draw(s,wallTime){const begin=performance.now();let t=s?s.time:wallTime;
+ function draw(s,wallTime){metrics.drawCalls++;const begin=performance.now();let t=s?s.time:wallTime;
   if(s!==previousState){terminalTime=null;previousState=s;}if(s&&['win','lose'].includes(s.phase)){if(terminalTime===null)terminalTime=wallTime;t=s.time+Math.min(1.2,wallTime-terminalTime);}
   ctx.setTransform(dpr,0,0,dpr,0,0);ctx.fillStyle='#050b12';ctx.fillRect(0,0,innerWidth,innerHeight);ctx.translate(ox,oy);ctx.scale(scale,scale);ctx.drawImage(stone,0,0);
   if(!s){if(status.ready){[['guard',440,230],['runner',660,285],['seer',750,195],['boss',535,125]].forEach(([kind,x,y],i)=>enemy(ctx,{kind,x,y,r:kind==='boss'?54:24,hp:1,maxHp:1,age:t,seed:i,shot:2},t));}return;}
