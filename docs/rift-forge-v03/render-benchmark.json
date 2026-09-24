@@ -1,0 +1,17 @@
+{
+  "device": "Chromium CI, 926x428, not physical iPhone",
+  "enemies": 70,
+  "balls": 140,
+  "results": [
+    {
+      "quality": "full",
+      "mean": 5.0383333333331395,
+      "p95": 60.09999999997672
+    },
+    {
+      "quality": "lite",
+      "mean": 4.816666666666666,
+      "p95": 59.09999999997672
+    }
+  ]
+}
