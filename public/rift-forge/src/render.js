@@ -71,6 +71,8 @@ function makeRenderer(canvas){
  function enemy(c,e,t){const boss=e.kind==='boss',r=e.r,foot=e.y+r*.9,size=boss?151:e.kind==='seer'?78:e.kind==='runner'?68:76;
   const walk=[0,1,0,2],moving=(e.age||0)+(e.seed||0),casting=e.kind==='seer'||boss;
   let frame=walk[Math.floor(moving*(e.kind==='runner'?7:3))%4];
+  // Melee wind-up and lunge align with the real breach damage threshold.
+  if(!casting){const gap=RF.FLOOR-e.y-e.r,speed=e.speed*(e.slow>0?.55:1);if(gap<speed*.45)frame=3;if(gap<speed*.16)frame=4;}
   if(casting&&e.shot<.48)frame=3;if((e.cast||0)>0)frame=4;if(e.flash>.075)frame=5;
   const bob=reduced?0:Math.sin(moving*(e.kind==='runner'?9:3))*(e.kind==='seer'?3:1.2);
   shadow(c,e.x,foot+1,r*.85);if(boss)rune(c,e.x,foot,r*1.12,e.hp<e.maxHp*.5?'#df6a59':'#c49c6d',.65);

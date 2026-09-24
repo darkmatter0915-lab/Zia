@@ -11,7 +11,7 @@ async function scene(page){await page.evaluate(()=>{
  Object.keys(R.TYPES).forEach((id,i)=>R.ball(s,id,2,240+i*60,405-(i%3)*40,150*(i%2?1:-1),-420,R.TYPES[id].power));
  s.fx.push({type:'arc',x:400,y:285,x2:510,y2:195,color:'#ead384',size:1,life:.3,max:.4});
  s.bullets.push({kind:'seer',x:550,y:360,vx:20,vy:150,r:5,life:5});
- });await page.waitForTimeout(160);
+ });await expect(page.locator('#toast')).not.toHaveClass(/on/);
 }
 test.beforeAll(()=>fs.mkdirSync(out,{recursive:true}));
 for(const [name,width,height] of [['desktop',1440,900],['mobile-landscape',926,428],['mobile-portrait',430,932]]){
@@ -25,7 +25,8 @@ for(const [name,width,height] of [['desktop',1440,900],['mobile-landscape',926,4
    return{ready:q.renderer.status.ready,bodyWidth:document.documentElement.scrollWidth,width:innerWidth,hud:h.bottom,dock:d.top,heroClear:bottomPoint.y>540,canvasW:c.width};
   });expect(geometry.ready).toBe(true);expect(geometry.bodyWidth).toBe(width);expect(geometry.hud).toBeLessThan(geometry.dock);expect(geometry.heroClear).toBe(true);
   await page.locator('#pause').click();await expect(page.getByText('熔火尚未熄滅')).toBeVisible();await page.locator('#quality').click();await expect(page.locator('#quality')).toHaveText('特效：精簡');await page.locator('#continue').click();
-  expect(await page.evaluate(()=>window.__RIFT.renderer.metrics.quality)).toBe('lite');expect(errors).toEqual([]);
+  expect(await page.evaluate(()=>window.__RIFT.renderer.metrics.quality)).toBe('lite');
+  await page.evaluate(()=>{const q=window.__RIFT;q.state.phase='draft';q.RF.makeOffers(q.state);});await expect(page.locator('#offer-0')).toBeVisible();await page.screenshot({path:`${out}/${name}-upgrade.png`});await page.locator('#offer-0').click();await expect(page.locator('#layer')).toBeHidden();expect(errors).toEqual([]);
  });
 }
 test('all five atlases decode with transparent gutters and all six key poses',async({page})=>{
