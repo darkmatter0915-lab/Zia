@@ -12,14 +12,15 @@ function makeRiftControls({canvas,rail,left,right,enabled,onAim,onDirection,onAc
  function move(){return railId!==null?analog:[...held.values()].at(-1)||0;}
  for(const [el,d] of [[left,-1],[right,1]]){
   el.addEventListener('pointerdown',e=>{if(!enabled())return;e.preventDefault();held.set(e.pointerId,d);capture(el,e.pointerId);direction(d);onActivity();});
-  for(const event of ['pointerup','pointercancel','lostpointercapture'])el.addEventListener(event,release);
+  el.addEventListener('lostpointercapture',release);
  }
  rail.addEventListener('pointerdown',e=>{if(!enabled()||railId!==null)return;e.preventDefault();railId=e.pointerId;capture(rail,e.pointerId);drag(e);onActivity();});
- rail.addEventListener('pointermove',e=>{if(e.pointerId!==railId||!enabled())return;e.preventDefault();drag(e);});
- for(const event of ['pointerup','pointercancel','lostpointercapture'])rail.addEventListener(event,release);
+ rail.addEventListener('lostpointercapture',release);
  canvas.addEventListener('pointerdown',e=>{if(!enabled()||aimId!==null)return;if(!onAim(e.clientX,e.clientY,true))return;e.preventDefault();aimId=e.pointerId;capture(canvas,e.pointerId);onActivity();});
- canvas.addEventListener('pointermove',e=>{if(!enabled())return;if(e.pointerId===aimId){e.preventDefault();onAim(e.clientX,e.clientY,false);}else if(aimId===null&&e.pointerType==='mouse'&&!e.buttons)onAim(e.clientX,e.clientY,false,true);});
- for(const event of ['pointerup','pointercancel','lostpointercapture'])canvas.addEventListener(event,release);
+ canvas.addEventListener('lostpointercapture',release);
+ // Keep active gestures tracked if native pointer capture is unavailable.
+ document.addEventListener('pointermove',e=>{if(!enabled())return;if(e.pointerId===railId){e.preventDefault();drag(e);}else if(e.pointerId===aimId){e.preventDefault();onAim(e.clientX,e.clientY,false);}else if(aimId===null&&e.target===canvas&&e.pointerType==='mouse'&&!e.buttons)onAim(e.clientX,e.clientY,false,true);},{passive:false});
+ for(const event of ['pointerup','pointercancel'])document.addEventListener(event,release);
  function reset(){const old=[...owners];owners.clear();held.clear();railId=aimId=null;analog=0;paint(0);for(const [id,el] of old)try{if(el.hasPointerCapture(id))el.releasePointerCapture(id);}catch{}}
  return {move,reset};
 }

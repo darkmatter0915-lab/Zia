@@ -50,11 +50,12 @@ test('movement stops on pause and legacy save resumes',async({page})=>{
  const x=await page.evaluate(()=>window.__RIFT.state.x);await page.waitForTimeout(200);expect(await page.evaluate(()=>window.__RIFT.state.x)).toBeCloseTo(x,1);
  await page.evaluate(()=>{const q=window.__RIFT,s=q.RF.snapshot(q.state);delete s.ghosts;delete s.fireAnim;delete s.moveDir;localStorage.setItem('rift-forge.v1.run',JSON.stringify(s));});await page.reload();await expect(page.locator('#resume')).toBeEnabled();await page.locator('#resume').click();await expect(page.locator('#layer')).toBeHidden();
 });
-test('bounded dense render benchmark',async({page})=>{
+test('bounded dense render benchmark',async({page},info)=>{
  await page.setViewportSize({width:926,height:428});await boot(page);await scene(page);
  const data=await page.evaluate(()=>{const q=window.__RIFT,R=q.RF,s=q.state;s.enemies=[];s.balls=[];s.fx=[];
  for(let i=0;i<70;i++)R.spawn(s,['guard','runner','seer'][i%3],145+i%10*74,125+Math.floor(i/10)*48);
  for(let i=0;i<140;i++)R.ball(s,Object.keys(R.TYPES)[i%9],2,125+i%20*37,180+Math.floor(i/20)*40,200,-400,10);
  const run=quality=>{q.renderer.setQuality(quality);const a=[];for(let i=0;i<60;i++){const t=performance.now();q.renderer.draw(s,42+i/60);a.push(performance.now()-t);}a.sort((x,y)=>x-y);return{quality,mean:a.reduce((x,y)=>x+y)/a.length,p95:a[Math.floor(a.length*.95)]};};return{device:'Chromium CI, 926x428, not physical iPhone',enemies:s.enemies.length,balls:s.balls.length,results:[run('full'),run('lite')]};});
+ data.device=`${info.project.name} CI, 926x428, not physical iPhone`;
  fs.writeFileSync(`${out}/render-benchmark.json`,JSON.stringify(data,null,2));expect(data.enemies).toBe(70);expect(data.balls).toBe(140);for(const r of data.results)expect(r.mean).toBeLessThan(120);
 });

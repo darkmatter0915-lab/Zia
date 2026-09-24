@@ -4,9 +4,9 @@ test.use({hasTouch:true,isMobile:true,deviceScaleFactor:2,viewport:{width:926,he
 async function start(page){await page.goto('?qa=1');await expect(page.locator('#start')).toBeEnabled();await page.locator('#start').tap();await expect(page.locator('#layer')).toBeHidden();await expect(page.locator('#move-rail')).toBeVisible();}
 async function pointer(page,selector,type,id,x,y){await page.locator(selector).dispatchEvent(type,{pointerId:id,pointerType:'touch',isPrimary:id===31,clientX:x,clientY:y,bubbles:true,cancelable:true,buttons:type==='pointerup'||type==='pointercancel'?0:1});}
 test('trusted drag stops on release, including release outside the rail',async({page})=>{
- await start(page);const r=await page.locator('#move-rail').boundingBox(),before=await page.evaluate(()=>window.__RIFT.state.x);
+ await start(page);await page.evaluate(()=>{window.pointerTrace=[];for(const type of ['pointerdown','pointermove','pointerup','pointercancel','gotpointercapture','lostpointercapture','resize'])window.addEventListener(type,e=>window.pointerTrace.push({type,id:e.pointerId,x:e.clientX,target:e.target.id,buttons:e.buttons,time:window.__RIFT.state.time}),true);});const r=await page.locator('#move-rail').boundingBox(),before=await page.evaluate(()=>window.__RIFT.state.x);
  await page.mouse.move(r.x+r.width/2,r.y+r.height/2);await page.mouse.down();await page.mouse.move(r.x+r.width+70,r.y+r.height/2);await page.waitForTimeout(180);await page.mouse.up();
- const after=await page.evaluate(()=>window.__RIFT.state.x);expect(after).toBeGreaterThan(before+20);await page.waitForTimeout(180);expect(await page.evaluate(()=>window.__RIFT.state.x)).toBeCloseTo(after,1);
+ const after=await page.evaluate(()=>window.__RIFT.state.x);if(after<=before+20)console.log('POINTER_TRACE',JSON.stringify(await page.evaluate(()=>window.pointerTrace)));expect(after).toBeGreaterThan(before+20);await page.waitForTimeout(180);expect(await page.evaluate(()=>window.__RIFT.state.x)).toBeCloseTo(after,1);
 });
 test('two pointer streams keep movement and aim independent, and cancel clears only its owner',async({page})=>{
  await start(page);const r=await page.locator('#move-rail').boundingBox(),v=await page.evaluate(()=>window.__RIFT.renderer.metrics.viewport);
@@ -35,14 +35,14 @@ test('pause stops repeated canvas work and suspends sound, resume restarts both'
 });
 test('touch layouts keep the court, four cores and controls clear at small sizes',async({page},info)=>{
  const errors=[];page.on('pageerror',e=>errors.push(e.message));await start(page);await page.evaluate(()=>{const q=window.__RIFT;q.freeze();q.state.loadout=['ember','frost','spark','echo'].map(id=>({id,level:2}));q.state.enemies=[];[['guard',270,180],['runner',540,240],['seer',690,155]].forEach(([kind,x,y])=>q.RF.spawn(q.state,kind,x,y));});
- const out=`test-results/rift-forge/${info.project.name}`;fs.mkdirSync(out,{recursive:true});
+ const out=`test-results/rift-forge/${info.project.name}`;fs.mkdirSync(out,{recursive:true});await expect(page.locator('#toast')).not.toHaveClass(/on/);
  for(const [w,h] of [[926,428],[568,320],[430,932],[390,844]]){
-  await page.setViewportSize({width:w,height:h});if(await page.locator('#continue').isVisible())await page.locator('#continue').tap();await expect(page.locator('#layer')).toBeHidden();await page.waitForTimeout(150);
+  await page.setViewportSize({width:w,height:h});await page.waitForTimeout(100);if(await page.locator('#continue').isVisible())await page.locator('#continue').tap();await expect(page.locator('#layer')).toBeHidden();await page.waitForTimeout(150);
   const g=await page.evaluate(()=>{const rect=e=>{const r=e.getBoundingClientRect();return{x:r.x,right:r.right,top:r.top,bottom:r.bottom};};return{v:window.__RIFT.renderer.metrics.viewport,hud:rect(document.querySelector('#hud')),dock:rect(document.querySelector('#dock')),groups:[...document.querySelector('#dock').children].map(rect),width:innerWidth,scroll:document.documentElement.scrollWidth};});
   expect(g.scroll).toBe(w);expect(g.v.top).toBeGreaterThan(g.hud.bottom);expect(g.v.bottom).toBeLessThan(g.dock.top);for(const r of g.groups){expect(r.x).toBeGreaterThanOrEqual(0);expect(r.right).toBeLessThanOrEqual(w);}
   for(let a=0;a<g.groups.length;a++)for(let b=a+1;b<g.groups.length;b++){const x=g.groups[a],y=g.groups[b];expect(x.right<=y.x||y.right<=x.x||x.bottom<=y.top||y.bottom<=x.top).toBe(true);}
-  await page.screenshot({path:`${out}/touch-${w}x${h}.png`});
+  await expect(page.locator('#toast')).not.toHaveClass(/on/);await page.screenshot({path:`${out}/touch-${w}x${h}.png`});
  }
- await page.setViewportSize({width:926,height:428});if(await page.locator('#continue').isVisible())await page.locator('#continue').tap();await page.evaluate(()=>document.documentElement.style.setProperty('--safe-x','47px'));await page.waitForTimeout(150);
+ await page.setViewportSize({width:926,height:428});await page.waitForTimeout(100);if(await page.locator('#continue').isVisible())await page.locator('#continue').tap();await page.evaluate(()=>document.documentElement.style.setProperty('--safe-x','47px'));await page.waitForTimeout(150);
  const safe=await page.locator('#dock').boundingBox();expect(safe.x).toBeGreaterThanOrEqual(47);expect(safe.x+safe.width).toBeLessThanOrEqual(879);expect(errors).toEqual([]);
 });

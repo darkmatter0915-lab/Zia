@@ -52,3 +52,5 @@
 @media(max-height:520px){#hud{top:max(5px,env(safe-area-inset-top))}#dock{bottom:max(5px,env(safe-area-inset-bottom))}.core{min-width:84px;padding:5px}.core .name{font-size:10px}.core .gem img{width:40px;height:40px}}
 @media(max-width:760px) and (orientation:landscape){.vital{width:135px}.vital .wordmark{font-size:8px}.stats{font-size:11px;padding:5px 8px}.core{min-width:50px;padding:4px;gap:2px}.core .gem{width:18px;height:18px}.core .name{display:none}.core .lv{font-size:8px;letter-spacing:0}.actions button{padding:7px;font-size:11px}#move-rail{width:114px}.deck{gap:4px}#dock{gap:6px}}
 @media(max-width:650px) and (orientation:portrait){#dock{gap:12px;align-items:center;justify-content:space-between}.deck{order:1}.moves{order:2}.actions{order:3}.rail-label{display:none}#rotate{top:calc(var(--arena-bottom,60vh) + 12px);bottom:auto}.core{min-width:70px}}
+@media(max-width:420px) and (orientation:portrait){.vital{width:70px}.controls{gap:4px}.controls button{font-size:10px;padding:7px 5px}}
+@media(max-width:760px) and (orientation:landscape){.vital .wordmark{white-space:nowrap;letter-spacing:.13em}}
