@@ -1,0 +1,32 @@
+name: Rift Forge combat art verification
+on:
+  push:
+    branches: [main, rift-forge-combat-art-v03]
+    paths: ['public/rift-forge/**', 'playwright.rift.config.cjs', '.github/workflows/rift-forge-art.yml']
+  pull_request:
+    paths: ['public/rift-forge/**', 'playwright.rift.config.cjs', '.github/workflows/rift-forge-art.yml']
+permissions:
+  contents: read
+jobs:
+  combat-art:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: node --test public/rift-forge/tests/engine.test.cjs
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test --config=playwright.rift.config.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: rift-forge-v03-evidence
+          path: test-results/
+          retention-days: 14

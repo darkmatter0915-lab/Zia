@@ -29,3 +29,12 @@
 @media(max-width:650px) and (orientation:portrait){.boss-result{height:85px}}
 .choice .synergy{font-size:11px;color:#c9e2d2;border-left:2px solid var(--core,#d9b580);padding-left:8px;margin-top:12px;line-height:1.45}
 .wave-meter{height:3px;background:#33414a;margin:5px 0 2px;overflow:hidden;border-radius:3px}.wave-meter i{display:block;height:100%;width:0;background:linear-gradient(90deg,#72b2b4,#ebbb78);transition:width .15s}
+/* Combat art v0.3: shared glyphs between the field and loadout. */
+.choice .symbol{border:0;background:none;box-shadow:none;width:76px;height:76px;margin:2px 0 10px;overflow:visible}
+.choice .symbol img{display:block;width:130%;height:130%;object-fit:contain}
+.core .gem{background:none;box-shadow:none;border:0;overflow:visible}
+.core .gem img{width:52px;height:52px;max-width:none;display:block}
+#asset-status{font-size:11px;color:#b4d5cd;margin-top:15px;min-height:16px}
+#asset-status button{margin-left:8px}#boss-reveal{visibility:hidden}#boss-reveal.on{visibility:visible}
+@media(max-height:500px){.choice .symbol{width:46px;height:46px}.core .gem img{width:43px;height:43px}#asset-status{margin-top:8px}}
+@media(max-width:650px) and (orientation:portrait){.choice .symbol{width:46px;height:46px;margin:0}}
