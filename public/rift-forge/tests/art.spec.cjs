@@ -31,12 +31,12 @@ for(const [name,width,height] of [['desktop',1440,900],['mobile-landscape',926,4
 }
 test('all five atlases decode with transparent gutters and all six key poses',async({page})=>{
  await boot(page);const results=await page.evaluate(async()=>{
-  const items=[];for(const name of ['hero','guard','runner','seer','boss']){const im=new Image();im.src=`./assets/sprites/${name}.webp`;await im.decode();const c=document.createElement('canvas');c.width=768;c.height=512;const x=c.getContext('2d');x.drawImage(im,0,0);const bytes=x.getImageData(0,0,768,512).data,counts=[];for(let f=0;f<6;f++){let visible=0;for(let y=0;y<256;y++)for(let xx=0;xx<256;xx++)if(bytes[((Math.floor(f/3)*256+y)*768+(f%3)*256+xx)*4+3]>128)visible++;counts.push(visible);}items.push({name,w:im.width,h:im.height,corner:bytes[3],counts});}return items;
+  const items=[];for(const name of ['hero','guard','runner','seer','boss']){const im=new Image();im.src=window.RIFT_RELEASE.sprites[name];await im.decode();const c=document.createElement('canvas');c.width=768;c.height=512;const x=c.getContext('2d');x.drawImage(im,0,0);const bytes=x.getImageData(0,0,768,512).data,counts=[];for(let f=0;f<6;f++){let visible=0;for(let y=0;y<256;y++)for(let xx=0;xx<256;xx++)if(bytes[((Math.floor(f/3)*256+y)*768+(f%3)*256+xx)*4+3]>128)visible++;counts.push(visible);}items.push({name,w:im.width,h:im.height,corner:bytes[3],counts});}return items;
  });for(const a of results){expect(a.w).toBe(768);expect(a.h).toBe(512);expect(a.corner).toBe(0);a.counts.forEach(n=>expect(n).toBeGreaterThan(1000));}
 });
 test('asset load failure blocks combat and retry recovers',async({page})=>{
- await page.route('**/assets/sprites/seer.webp',r=>r.abort());await page.goto('?qa=1');await expect(page.locator('#retry-assets')).toBeVisible();await expect(page.locator('#start')).toBeDisabled();
- await page.unroute('**/assets/sprites/seer.webp');await page.locator('#retry-assets').click();await expect(page.locator('#start')).toBeEnabled();await page.locator('#start').click();await expect(page.locator('#layer')).toBeHidden();
+ await page.route('**/assets/sprites/seer.webp*',r=>r.abort());await page.goto('?qa=1');await expect(page.locator('#retry-assets')).toBeVisible();await expect(page.locator('#start')).toBeDisabled();
+ await page.unroute('**/assets/sprites/seer.webp*');await page.locator('#retry-assets').click();await expect(page.locator('#start')).toBeEnabled();await page.locator('#start').click();await expect(page.locator('#layer')).toBeHidden();
 });
 test('boss cast, evolution effects, and terminal transition render without errors',async({page})=>{
  const errors=[];page.on('pageerror',e=>errors.push(e.message));await page.setViewportSize({width:1440,height:900});await boot(page);await scene(page);

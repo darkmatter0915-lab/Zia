@@ -34,7 +34,7 @@ function makeRenderer(canvas){
    const finish=ok=>{if(settled)return;settled=true;clearTimeout(timeout);if(ok){sprites[name]=im;
     const mask=document.createElement('canvas');mask.width=im.width;mask.height=im.height;const m=mask.getContext('2d');m.drawImage(im,0,0);m.globalCompositeOperation='source-in';m.fillStyle='#fff7dc';m.fillRect(0,0,im.width,im.height);flashSprites[name]=mask;status.loaded++;
    }else status.failed.push(name);resolve(ok);};
-   const timeout=setTimeout(()=>finish(false),12000);im.onload=()=>finish(im.width===768&&im.height===512);im.onerror=()=>finish(false);im.src=`./assets/sprites/${name}.webp`;
+   const timeout=setTimeout(()=>finish(false),12000);im.onload=()=>finish(im.width===768&&im.height===512);im.onerror=()=>finish(false);im.src=window.RIFT_RELEASE.sprites[name];
   }))).then(results=>{status.ready=results.every(Boolean);return status.ready;});
  }
  const ready=load();

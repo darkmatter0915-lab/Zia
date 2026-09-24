@@ -71,3 +71,9 @@ BALL x PIT：取反彈戰鬥、局內組合、局外成長的三層循環。Pegl
 - 橫直轉向或失去焦點自動暫停；繼續時不沿用按住的操作。
 - 暫停／選單期間停止重複繪製 Canvas，並暫停 AudioContext；恢復後才繼續。這項改善不等於密集戰鬥已達固定 FPS。
 - `tests/mobile.spec.cjs` 測試拖動、雙指標分流、取消、轉向、偏好存檔、音訊狀態、閒置繪製與四種觸控版面。雙指標案例使用明確的合成 PointerEvent，不等於實體多指裝置驗證。
+
+### 0.4.1 回訪玩家美術更新修正
+
+根目錄 Service Worker 原本對 Rift Forge 的未版本化 JS/CSS 採用 cache-first，導致新版 HTML 搭配舊幾何渲染器。現在遊戲資源使用內容雜湊 URL，遊戲入口會更新既有根 Worker；新 Worker 排除本遊戲並只移除 Zia 快取中的遊戲項目。此流程不清除 localStorage、存檔或控制偏好。
+
+修改遊戲程式、美術或樣式後執行 `node scripts/rift-forge/stamp-release.mjs`；正式建置會檢查雜湊是否同步，避免忘記更新。`update.spec.cjs` 在 Chromium/WebKit 中安裝舊 Worker、確認舊 renderer 被快取攔截，然後從原入口開啟新版，驗證五組圖集、存檔續玩與非遊戲快取保留。部署工作也執行遊戲驗證，並比對正式入口、程式及五組圖集的完整內容。

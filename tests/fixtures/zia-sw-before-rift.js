@@ -6,23 +6,14 @@ self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(core)).then(() => self.skipWaiting()))
 })
 self.addEventListener('activate', event => {
-  event.waitUntil((async () => {
-    for (const key of await caches.keys()) {
-      if (!key.startsWith('zia-runtime-')) continue
-      if (key !== CACHE) { await caches.delete(key); continue }
-      const cache = await caches.open(key)
-      const game = new URL('./rift-forge/', scope).href
-      await Promise.all((await cache.keys()).filter(request => request.url.startsWith(game)).map(request => cache.delete(request)))
-    }
-    await self.clients.claim()
-  })())
+  event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key.startsWith('zia-runtime-') && key !== CACHE).map(key => caches.delete(key)))).then(() => self.clients.claim()))
 })
 self.addEventListener('fetch', event => {
   const request = event.request
   if (request.method !== 'GET' || !request.url.startsWith(scope)) return
   const path = new URL(request.url).pathname.slice(new URL(scope).pathname.length)
   // Mutable GLBs, manifests and decoder files must not be restored from old caches.
-  if (/^(rift-forge|dungeon-reborn|warrior-asset-lab|assets\/characters|vendor)\//.test(path)) return
+  if (/^(dungeon-reborn|warrior-asset-lab|assets\/characters|vendor)\//.test(path)) return
   const getNetwork = async () => {
     const response = await fetch(request)
     if (response.ok && response.type !== 'opaque') {
