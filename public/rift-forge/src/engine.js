@@ -126,8 +126,8 @@ const RF = (() => {
     if(s.telegraph>0){s.telegraph-=dt;if(s.telegraph<=0){fx(s,'arc',s.lane,TOP,'#ff767b',4,s.lane,540);if(Math.abs(s.x-s.lane)<43)damagePlayer(s,20);}}
     const active=s.enemies.filter(e=>!e.dead);s.peakEnemies=Math.max(s.peakEnemies,active.length);
     for(let bi=0,limit=s.balls.length;bi<limit;bi++){const b=s.balls[bi];if(b.dead)continue;b.age+=dt;b.lock=Math.max(0,b.lock-dt);b.x+=b.vx*dt;b.y+=b.vy*dt;
-      if(b.x-b.r<LEFT){b.x=LEFT+b.r;b.vx=Math.abs(b.vx);b.banks++;}if(b.x+b.r>RIGHT){b.x=RIGHT-b.r;b.vx=-Math.abs(b.vx);b.banks++;}
-      if(b.y-b.r<TOP){b.y=TOP+b.r;b.vy=Math.abs(b.vy);b.banks++;}
+      if(b.x-b.r<LEFT){b.x=LEFT+b.r;b.vx=Math.abs(b.vx);b.banks++;fx(s,'hit',b.x,b.y,TYPES[b.type].color,.35);}if(b.x+b.r>RIGHT){b.x=RIGHT-b.r;b.vx=-Math.abs(b.vx);b.banks++;fx(s,'hit',b.x,b.y,TYPES[b.type].color,.35);}
+      if(b.y-b.r<TOP){b.y=TOP+b.r;b.vy=Math.abs(b.vy);b.banks++;fx(s,'hit',b.x,b.y,TYPES[b.type].color,.35);}
       for(const e of active){if(e.dead||(e.id===b.last&&b.lock>0))continue;const dx=b.x-e.x,dy=b.y-e.y,r=b.r+e.r;if(Math.abs(dx)>r||Math.abs(dy)>r)continue;const distance=Math.hypot(dx,dy);if(distance<r){const nx=distance?dx/distance:0,ny=distance?dy/distance:-1,dot=b.vx*nx+b.vy*ny;b.x=e.x+nx*(r+.5);b.y=e.y+ny*(r+.5);if(dot<0){b.vx-=2*dot*nx;b.vy-=2*dot*ny;}b.last=e.id;b.lock=.1;impact(s,b,e);break;}}
       if(b.y>518){if(Math.abs(b.x-s.x)<52+s.passives.catch*18){s.catches++;s.charge=clamp(s.charge+1+s.passives.catch*.35,0,100);fx(s,'hit',b.x,516,TYPES[b.type].color,.6);}b.dead=true;}
       if(b.age>12)b.dead=true;
