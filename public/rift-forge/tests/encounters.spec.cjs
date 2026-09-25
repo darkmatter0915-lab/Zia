@@ -10,7 +10,7 @@ async function bossScene(page,id){await page.evaluate(id=>{
  for(const [i,type] of ['ember','frost','spark','thorn','leech','echo','steam','tempest','plague'].entries())R.ball(s,type,2,240+i%5*108,330+Math.floor(i/5)*83,90,-420,26);
  R.spawn(s,'guard',300,300);R.spawn(s,'runner',650,335);R.spawn(s,'seer',590,265);
  for(const [i,type] of ['steam','tempest','plague'].entries()){const e=s.enemies[i+1];e.hp=e.maxHp=999;R.impact(s,{type,level:2,power:26,banks:0,generation:1,x:e.x,y:e.y,vx:30,vy:-420},e);}
- for(const f of s.fx)f.life=f.max*.6;s.texts=[];
+ for(const f of s.fx)f.life=f.max*.6;for(const e of s.enemies)e.flash=.02;s.texts=[];
  },id);await expect(page.locator('#wave')).toHaveText({maw:'熔獄巨顎',oracle:'裂星司祭',bell:'熔鐘守衛'}[id]);await expect(page.locator('#toast')).not.toHaveClass(/on/);}
 for(const [name,width,height] of [['desktop',1440,900],['mobile-landscape',926,428]]){
  test(name+' three unique bosses and layered attacks render with readable hazards',async({page})=>{

@@ -50,6 +50,8 @@ const RF = (() => {
   function spawn(s,kind,x,y,bossId='bell'){if(s.enemies.length>=70)return;
     const stats={guard:[26,29,8],runner:[19,19,16],seer:[23,23,7],boss:[54,2000,0]}[kind];
     if(!stats||kind==='boss'&&!BOSSES[bossId])return;const boss=kind==='boss'&&BOSSES[bossId];
+    // Keep the full crown/shoulders below the arena edge and boss health bar.
+    if(boss)y=Math.max(232,y);
     const hp=boss?boss.hp:stats[1]*(1+(s.wave-1)*0.25);
     s.enemies.push({id:++s.uid,kind,...(boss?{bossId,attack:0,summon:8}:{}),x,y,r:boss?boss.r:stats[0],hp,maxHp:hp,speed:stats[2],slow:0,burn:0,poison:0,burnD:0,poisonD:0,burnOwner:'ember',poisonOwner:'thorn',flash:0,cast:0,age:0,shot:boss?2.2:2+rand(s)*2,seed:rand(s)*6.28,dead:false});
   }
@@ -198,7 +200,7 @@ const RF = (() => {
     const s=Object.assign(create({},1),raw);s.events=[];s.fx=[];s.ghosts=[];s.texts=[];s.fireAnim=0;
     // Existing 0.5 runs retain their current wave and do not replay missed events.
     if(raw.eventOrder===undefined)s.eventIndex=[3,6,8].filter(w=>w<=s.wave).length;
-    for(const e of s.enemies)if(e.kind==='boss'){e.bossId??='bell';e.attack??=0;e.summon??=8;s.encounter=e.bossId;}
+    for(const e of s.enemies)if(e.kind==='boss'){e.bossId??='bell';e.attack??=0;e.summon??=8;e.y=Math.max(232,e.y);s.encounter=e.bossId;}
     if(s.phase==='pause')s.phase='play';return s;
   }catch{return null;}}
   return {W,H,LEFT,RIGHT,TOP,FLOOR,TYPES,RECIPES,PASSIVES,BOSSES,ENCOUNTERS,clamp,rand,create,spawn,step,hit,impact,ball,ready,evolve,makeOffers,applyOffer,reroll,pulse,dash,settle,buy,cost,metaSafe,snapshot,restore,beginBoss,openEncounter,eventChoices,chooseEncounter};
