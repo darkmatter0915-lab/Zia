@@ -1,7 +1,7 @@
 const {test,expect}=require('@playwright/test');
 const fs=require('node:fs');
 function output(info){const dir=`test-results/rift-forge/${info.project.name}`;fs.mkdirSync(dir,{recursive:true});return dir;}
-async function legacyWinner(page){await page.addInitScript(()=>{if(!localStorage.getItem('rift-forge.v1.meta'))localStorage.setItem('rift-forge.v1.meta',JSON.stringify({v:1,wins:1,runs:3,credits:120,forge:2,ward:1}));});await page.goto('?qa=1');await expect(page.locator('#chapter-2')).toBeEnabled();}
+async function legacyWinner(page){await page.addInitScript(()=>{if(!sessionStorage.getItem('rift-qa-legacy-seeded')){localStorage.setItem('rift-forge.v1.meta',JSON.stringify({v:1,wins:1,runs:3,credits:120,forge:2,ward:1}));sessionStorage.setItem('rift-qa-legacy-seeded','1');}});await page.goto('?qa=1');await expect(page.locator('#chapter-2')).toBeEnabled();}
 
 test('legacy winners enter chapter two on mobile and resume its exact build',async({page},info)=>{
  await page.setViewportSize({width:390,height:844});await page.goto('?qa=1');await expect(page.locator('#start')).toBeEnabled();await expect(page.locator('#chapter-2')).toBeDisabled();
