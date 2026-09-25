@@ -12,4 +12,4 @@ await Promise.all(paths.map(async path=>{
  const file=path.split('?')[0]==='./'?'index.html':path.split('?')[0];
  if(digest(Buffer.from(await response.arrayBuffer()))!==digest(readFileSync(new URL(file,local))))throw new Error(`Published content differs: ${path}`);
 }));
-console.log(`LIVE_RIFT_ART_VERIFIED ${release.version}: entry, scripts, stylesheet and all five atlases and arena art match the release.`);
+console.log(`LIVE_RIFT_ART_VERIFIED ${release.version}: entry, scripts, stylesheet and all ${Object.keys(release.sprites).length} atlases and arena art match the release.`);
