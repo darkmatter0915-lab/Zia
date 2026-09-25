@@ -1,7 +1,7 @@
 name: Rift Forge combat art verification
 on:
   push:
-    branches: [main, rift-forge-combat-art-v03, rift-forge-mobile-v04]
+    branches: [main, rift-forge-combat-art-v03, rift-forge-mobile-v04, rift-forge-polish-v05]
     paths: ['public/rift-forge/**', 'public/sw.js', 'scripts/rift-forge/**', 'tests/fixtures/zia-sw-before-rift.js', 'package.json', 'playwright.rift.config.cjs', '.github/workflows/rift-forge-art.yml']
   pull_request:
     paths: ['public/rift-forge/**', 'public/sw.js', 'scripts/rift-forge/**', 'tests/fixtures/zia-sw-before-rift.js', 'package.json', 'playwright.rift.config.cjs', '.github/workflows/rift-forge-art.yml']
@@ -27,6 +27,6 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: rift-forge-v04-evidence
+          name: rift-forge-v05-evidence
           path: test-results/
           retention-days: 14

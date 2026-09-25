@@ -1,7 +1,7 @@
 const {test,expect}=require('@playwright/test');
 const fs=require('node:fs');
 let out;
-async function boot(page){await page.goto('?qa=1');await expect(page.locator('#start')).toBeEnabled();}
+async function boot(page){await page.goto('?qa=1');await expect(page.locator('#start')).toBeEnabled();await expect.poll(()=>page.evaluate(()=>window.__RIFT.renderer.status.scenery)).toBe('ready');}
 async function scene(page){await page.evaluate(()=>{
  const q=window.__RIFT,R=q.RF;q.start(false);q.freeze();const s=q.state;
  s.time=42;s.wave=6;s.waveTime=13;s.enemies=[];s.balls=[];s.bullets=[];s.fx=[];s.ghosts=[];s.texts=[];
