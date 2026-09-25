@@ -31,6 +31,10 @@ function makeElementArt({glow,poly,circle,reduced,getQuality}){
   c.strokeStyle='#fff2ac';c.lineWidth=2.2;c.beginPath();c.arc(140,52,15,.1+phase*.12,2.1+phase*.12);c.stroke();
   return tile;
  });
+ const bloodHeart=document.createElement('canvas');bloodHeart.width=bloodHeart.height=64;
+ {const c=bloodHeart.getContext('2d'),g=c.createRadialGradient(26,23,2,32,32,28);g.addColorStop(0,'#ffe2e9');g.addColorStop(.22,'#ffafc5');g.addColorStop(.45,'#e54876');g.addColorStop(.78,'#9d224e');g.addColorStop(1,'#3b152e');c.fillStyle=g;c.beginPath();c.ellipse(32,32,28,23,0,0,TAU);c.fill();}
+ const plaguePetal=document.createElement('canvas');plaguePetal.width=64;plaguePetal.height=96;
+ {const c=plaguePetal.getContext('2d'),g=c.createLinearGradient(32,85,28,8);g.addColorStop(0,'#371d3b');g.addColorStop(.4,'#8d3c71');g.addColorStop(.75,'#db84af');g.addColorStop(1,'#ffe0ed');c.fillStyle=g;c.strokeStyle='#f7aed3';c.lineWidth=1.2;c.beginPath();c.moveTo(32,90);c.bezierCurveTo(6,64,17,28,44,6);c.bezierCurveTo(59,39,50,65,32,90);c.fill();c.stroke();stroke(c,[[32,86],[30,57],[43,12]],'#ecadc8',1,.55);}
  function flame(c,x,y,r,t,angle=0,alpha=1){c.save();c.globalAlpha*=alpha;c.translate(x,y);c.rotate(angle);const z=r/22;c.drawImage(flameFrames[Math.floor(motion(t)*24)%12],-140*z,-52*z,192*z,104*z);c.restore();}
  function crystal(c,x,y,length,width,angle=0,alpha=1,violet=false){
   c.save();c.globalAlpha*=alpha;c.translate(x,y);c.rotate(angle);c.lineWidth=.8;
@@ -60,11 +64,18 @@ function makeElementArt({glow,poly,circle,reduced,getQuality}){
   if(full())ribbon(c,b,t,color,id==='frost'?5:id==='echo'?9:3);
   if(id==='spark'||id==='tempest'){
    // A travelling forked discharge, without a circular icon at its nose.
-   const tail=b.trail?.[Math.max(0,b.trail.length-(full()?7:4))],len=Math.min(id==='tempest'?100:78,16+age*Math.hypot(b.vx,b.vy));
+   const trail=b.trail?.slice(-(full()?7:4)),tail=trail?.[0],len=Math.min(id==='tempest'?100:78,16+age*Math.hypot(b.vx,b.vy));
    const x=tail?.x??b.x-Math.cos(a)*len,y=tail?.y??b.y-Math.sin(a)*len;
    // Segment real trajectory at banks instead of cutting across the corner.
-   const pts=b.trail?.length>1?b.trail.concat({x:b.x,y:b.y}):[{x,y},{x:b.x,y:b.y}];
-   for(let i=1;i<pts.length;i++){c.save();c.globalAlpha*=.35+.65*i/(pts.length-1);bolt(c,pts[i-1].x,pts[i-1].y,pts[i].x,pts[i].y,tm+i,color,b.generation?.65:1,true);c.restore();}
+   const pts=trail?.length>1?trail.concat({x:b.x,y:b.y}):[{x,y},{x:b.x,y:b.y}];
+   // Join straight samples into one readable bolt; retain corners at real ricochets.
+   // This also avoids seven overlapping glow/stroke stacks per projectile.
+   let anchor=pts[0];
+   for(let i=1;i<pts.length;i++){
+    const prev=pts[i-1],p=pts[i],next=pts[i+1];let corner=!next;
+    if(next){const ux=p.x-prev.x,uy=p.y-prev.y,vx=next.x-p.x,vy=next.y-p.y;corner=(ux*vx+uy*vy)<.92*Math.hypot(ux,uy)*Math.hypot(vx,vy);}
+    if(corner){bolt(c,anchor.x,anchor.y,p.x,p.y,tm+i,color,b.generation?.65:1.15,true);anchor=p;}
+   }
    glow(c,b.x,b.y,r*2.4,color,.55);
    stroke(c,[[b.x-Math.cos(a)*12,b.y-Math.sin(a)*12],[b.x+Math.cos(a)*5,b.y+Math.sin(a)*5]],'#efffff',2);
    if(id==='tempest'){bolt(c,b.x-Math.cos(a)*32-Math.sin(a)*11,b.y-Math.sin(a)*32+Math.cos(a)*11,b.x,b.y,tm+3,'#b8c0ff',.7);}
@@ -83,10 +94,10 @@ function makeElementArt({glow,poly,circle,reduced,getQuality}){
    for(let j=0;j<2;j++){c.strokeStyle=j?'#d8f291':'#4e8c49';c.lineWidth=j?1:3;c.beginPath();c.moveTo(5,0);c.bezierCurveTo(-17,-14,-28,14,-55,Math.sin(tm*7)*7);c.stroke();}
    poly(c,[[r*1.5,0],[-r*.5,-r*.62],[-r*.15,0],[-r*.6,r*.58]],'#aee07d','#effbb7');
    for(let i=0;i<3;i++){const x=-11-i*11;poly(c,[[x,0],[x-8,-9+i],[x-4,2]],'#91c368');}
-   if(id==='plague'){c.save();c.rotate(tm*.8);for(let i=0;i<5;i++){c.rotate(TAU/5);c.fillStyle='#dd85b6';c.beginPath();c.ellipse(0,-r*.65,r*.35,r*.8,.25,0,TAU);c.fill();}circle(c,0,0,r*.4,'#eaffb8');c.restore();}
+   if(id==='plague'){c.save();c.rotate(tm*.8);for(let i=0;i<5;i++){c.rotate(TAU/5);c.drawImage(plaguePetal,-r*.58,-r*1.65,r*1.16,r*1.74);}circle(c,0,0,r*.43,'#547347','#cdeb95');glow(c,0,0,r*.7,'#cfea89',.55);circle(c,-r*.1,-r*.1,r*.15,'#f1ffd0');c.restore();}
   }else if(id==='leech'){
    glow(c,0,0,r*2.6,color,.4);c.fillStyle='#a62f60';c.beginPath();c.moveTo(r,0);c.bezierCurveTo(r,-r*1.4,-r*1.5,-r,-r*4,0);c.bezierCurveTo(-r*1.2,-r*.2,-r,r*1.7,r,0);c.fill();
-   c.fillStyle='#fa7190';c.beginPath();c.ellipse(0,0,r,r*.7,0,0,TAU);c.fill();stroke(c,[[-r*.5,-r*.3],[r*.4,-r*.2]],'#ffe4e6',2);
+   c.drawImage(bloodHeart,-r*1.14,-r*1.14,r*2.28,r*2.28);stroke(c,[[-r*.5,-r*.3],[r*.4,-r*.2]],'#ffd1df',1.1,.65);
    for(let i=1;i<4;i++){const p=(tm*1.3+i*.28)%1;circle(c,-r*2-p*32,Math.sin(i*2+tm)*7,2.5*(1-p),'#ff97ad');}
   }else if(id==='echo'){
    glow(c,0,0,r*2.7,color,.42);for(let i=3;i>=0;i--){c.save();c.translate(-i*13,Math.sin(tm*6+i)*3);c.globalAlpha*=1-i*.22;crystal(c,0,0,r*2.6,r*.6,0,1,true);c.restore();}
