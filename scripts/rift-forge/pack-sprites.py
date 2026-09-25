@@ -8,8 +8,8 @@ import numpy as np
 from PIL import Image
 from scipy import ndimage
 source=Path(sys.argv[1]); out=Path(sys.argv[2]); out.mkdir(parents=True,exist_ok=True)
-manifest={}
-for name in ['hero','guard','runner','seer','boss']:
+manifest=json.loads((out/'manifest.json').read_text()) if (out/'manifest.json').exists() else {}
+for name in sys.argv[3:] or ['hero','guard','runner','seer','boss']:
     im=Image.open(source/(name+'.png')).convert('RGBA')
     alpha=np.array(im.getchannel('A'))
     labels,count=ndimage.label(alpha>128)
