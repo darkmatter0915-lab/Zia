@@ -4,7 +4,7 @@ const base=new URL('rift-forge/',process.env.SITE);
 const local=new URL('../../public/rift-forge/',import.meta.url);
 const html=readFileSync(new URL('index.html',local),'utf8');
 const release=JSON.parse(readFileSync(new URL('src/release.js',local),'utf8').split('window.RIFT_RELEASE = ')[1].replace(/;\s*$/,''));
-const paths=['./?release='+release.version,...[...html.matchAll(/(?:src|href)="(\.\/[^\"]+)"/g)].map(m=>m[1]),...Object.values(release.sprites),release.floor];
+const paths=['./?release='+release.version,...[...html.matchAll(/(?:src|href)="(\.\/[^\"]+)"/g)].map(m=>m[1]),...Object.values(release.sprites),release.floor,release.frostFloor];
 const digest=bytes=>createHash('sha256').update(bytes).digest('hex');
 await Promise.all(paths.map(async path=>{
  const response=await fetch(new URL(path,base),{cache:'no-store',signal:AbortSignal.timeout(20000)});
@@ -12,4 +12,4 @@ await Promise.all(paths.map(async path=>{
  const file=path.split('?')[0]==='./'?'index.html':path.split('?')[0];
  if(digest(Buffer.from(await response.arrayBuffer()))!==digest(readFileSync(new URL(file,local))))throw new Error(`Published content differs: ${path}`);
 }));
-console.log(`LIVE_RIFT_ART_VERIFIED ${release.version}: entry, scripts, stylesheet and all ${Object.keys(release.sprites).length} atlases and arena art match the release.`);
+console.log(`LIVE_RIFT_ART_VERIFIED ${release.version}: entry, scripts, stylesheet and all ${Object.keys(release.sprites).length} atlases and both arena floors match the release.`);
