@@ -39,5 +39,5 @@ test('legacy saves resume awakened equipment and new atlas failures can be retri
  await page.evaluate(()=>{const q=window.__RIFT,s=q.RF.create({},42);s.level=12;s.hp=73;s.coins=81;s.nextSpawn=999;s.shotCd=999;q.RF.ball(s,'frost',3,480,300,0,-470,40);const old=q.RF.snapshot(s);delete old.balls[0].heroLevel;localStorage.setItem('rift-forge.v1.run',JSON.stringify(old));});
  await page.reload();await expect(page.locator('#resume')).toBeEnabled();await page.locator('#resume').click();
  const result=await page.evaluate(()=>{const q=window.__RIFT;q.freeze();q.renderer.draw(q.state,q.state.time);return {level:q.state.level,hp:q.state.hp,coins:q.state.coins,hero:q.renderer.metrics.hero,balls:q.state.balls.map(b=>b.heroLevel),loaded:q.renderer.status.loaded};});
- expect(result).toEqual({level:12,hp:73,coins:81,hero:{level:12,tier:4,sprite:'hero-ascendant'},balls:[12],loaded:9});
+ expect(result).toEqual({level:12,hp:73,coins:81,hero:{level:12,tier:4,sprite:'hero-ascendant'},balls:[12],loaded:14});
 });

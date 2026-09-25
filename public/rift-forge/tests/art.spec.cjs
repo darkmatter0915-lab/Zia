@@ -29,7 +29,7 @@ for(const [name,width,height] of [['desktop',1440,900],['mobile-landscape',926,4
   await page.evaluate(()=>{const q=window.__RIFT;q.state.phase='draft';q.RF.makeOffers(q.state);});await expect(page.locator('#offer-0')).toBeVisible();await page.screenshot({path:`${out}/${name}-upgrade.png`});await page.locator('#offer-0').click();await expect(page.locator('#layer')).toBeHidden();expect(errors).toEqual([]);
  });
 }
-test('all nine atlases decode with transparent gutters and all six key poses',async({page})=>{
+test('all fourteen atlases decode with transparent gutters and all six key poses',async({page})=>{
  await boot(page);const results=await page.evaluate(async()=>{
   const items=[];for(const name of Object.keys(window.RIFT_RELEASE.sprites)){const im=new Image();im.src=window.RIFT_RELEASE.sprites[name];await im.decode();const c=document.createElement('canvas');c.width=768;c.height=512;const x=c.getContext('2d');x.drawImage(im,0,0);const bytes=x.getImageData(0,0,768,512).data,counts=[];for(let f=0;f<6;f++){let visible=0;for(let y=0;y<256;y++)for(let xx=0;xx<256;xx++)if(bytes[((Math.floor(f/3)*256+y)*768+(f%3)*256+xx)*4+3]>128)visible++;counts.push(visible);}items.push({name,w:im.width,h:im.height,corner:bytes[3],counts});}return items;
  });for(const a of results){expect(a.w).toBe(768);expect(a.h).toBe(512);expect(a.corner).toBe(0);a.counts.forEach(n=>expect(n).toBeGreaterThan(1000));}
