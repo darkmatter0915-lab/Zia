@@ -53,9 +53,10 @@ test('movement stops on pause and legacy save resumes',async({page})=>{
 test('bounded dense render benchmark',async({page},info)=>{
  await page.setViewportSize({width:926,height:428});await boot(page);await scene(page);
  const data=await page.evaluate(()=>{const q=window.__RIFT,R=q.RF,s=q.state;s.enemies=[];s.balls=[];s.fx=[];
- for(let i=0;i<70;i++)R.spawn(s,['guard','runner','seer'][i%3],145+i%10*74,125+Math.floor(i/10)*48);
- for(let i=0;i<140;i++)R.ball(s,Object.keys(R.TYPES)[i%9],2,125+i%20*37,180+Math.floor(i/20)*40,200,-400,10);
- const run=quality=>{q.renderer.setQuality(quality);const a=[];for(let i=0;i<60;i++){const t=performance.now();q.renderer.draw(s,42+i/60);a.push(performance.now()-t);}a.sort((x,y)=>x-y);return{quality,mean:a.reduce((x,y)=>x+y)/a.length,p95:a[Math.floor(a.length*.95)]};};return{device:'Chromium CI, 926x428, not physical iPhone',enemies:s.enemies.length,balls:s.balls.length,results:[run('full'),run('lite')]};});
+ for(let i=0;i<70;i++){R.spawn(s,['guard','runner','seer'][i%3],145+i%10*74,125+Math.floor(i/10)*48);Object.assign(s.enemies.at(-1),{burn:i%3===0?2:0,slow:i%3===1?2:0,poison:i%3===2?2:0});}
+ for(let i=0;i<140;i++){R.ball(s,Object.keys(R.TYPES)[i%9],2,125+i%20*37,180+Math.floor(i/20)*40,200,-400,10);const b=s.balls.at(-1);b.age=.6;b.trail=Array.from({length:7},(_,j)=>({x:b.x-(7-j)*4,y:b.y+(7-j)*9}));}
+ for(let i=0;i<90;i++)s.fx.push({type:i%5===0?'arc':'impact',core:Object.keys(R.TYPES)[i%9],x:145+i%10*74,y:145+Math.floor(i/10)*36,x2:190+i%10*70,y2:180+Math.floor(i/10)*36,color:'#85baff',size:1,life:.32,max:.48});
+ const run=quality=>{q.renderer.setQuality(quality);const a=[];for(let i=0;i<60;i++){const t=performance.now();s.time=42+i/60;q.renderer.draw(s,s.time);a.push(performance.now()-t);}a.sort((x,y)=>x-y);return{quality,mean:a.reduce((x,y)=>x+y)/a.length,p95:a[Math.floor(a.length*.95)]};};return{device:'Chromium CI, 926x428, not physical iPhone',enemies:s.enemies.length,balls:s.balls.length,effects:s.fx.length,statuses:70,results:[run('full'),run('lite')]};});
  data.device=`${info.project.name} CI, 926x428, not physical iPhone`;
  fs.writeFileSync(`${out}/render-benchmark.json`,JSON.stringify(data,null,2));expect(data.enemies).toBe(70);expect(data.balls).toBe(140);for(const r of data.results)expect(r.mean).toBeLessThan(120);
 });

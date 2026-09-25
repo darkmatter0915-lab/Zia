@@ -101,7 +101,7 @@ const RF = (() => {
     if(id==='spark'||id==='tempest'){
       let last=e;const seen=new Set([e.id]);for(let n=0;n<(id==='tempest'?4:2);n++){
         const near=s.enemies.filter(q=>!q.dead&&!seen.has(q.id)&&dist(q,last)<160).sort((a,c)=>dist(a,last)-dist(c,last))[0];
-        if(!near)break;hit(s,near,d*.55,id,true);fx(s,'arc',last.x,last.y,kind.color,1,near.x,near.y);seen.add(near.id);last=near;
+        if(!near)break;hit(s,near,d*.55,id,true);fx(s,'arc',last.x,last.y,kind.color,1,near.x,near.y,id);seen.add(near.id);last=near;
       }
     }
     if(id==='steam'||id==='plague'){
