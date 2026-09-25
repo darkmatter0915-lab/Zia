@@ -22,7 +22,7 @@
 
 ## 驗證
 
-- `node --test public/rift-forge/tests/engine.test.cjs`：42 項規則測試，包含新增 Boss 流程、事件支付／回復／取捨、事件存檔、傷害預告與舊版相容。
+- `node --test public/rift-forge/tests/engine.test.cjs`：43 項規則測試，包含新增 Boss 流程、事件支付／回復／取捨、事件存檔、傷害預告與舊版相容。
 - `npm run build`：正式建置與所有遊戲資源內容雜湊檢查。
 - `npx playwright test --config=playwright.rift.config.cjs`：Chromium／WebKit 的美術、觸控、事件介面、Boss 圖集、舊快取更新與存檔測試。新增截圖使用 QA 配置的明確場景，不冒充自然遊玩進度。
 - 六個固定種子（1、2、3、17、99、403）的正常規則模擬均經過三場 Boss、三次事件並結算勝利，戰鬥時間 212–233 秒。策略採用規則式移動、選取強化、進化與充能脈衝，沒有修改傷害或無敵；僅作流程煙霧測試，不代表人類勝率、正式平衡或手機效能。

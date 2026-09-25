@@ -165,6 +165,7 @@ const RF = (() => {
     if(s.phase!=='play')return;
     for(const h of s.hazards){h.life-=dt;if(h.life<=0){fx(s,'hazard',h.x,520,h.kind==='star'?'#c5aaff':'#ff9b64',h.width,0,0,h.kind);if(Math.abs(s.x-h.x)<h.width/2+12)damagePlayer(s,h.damage);}}s.hazards=s.hazards.filter(h=>h.life>0);
     if(s.telegraph>0){s.telegraph-=dt;if(s.telegraph<=0){fx(s,'arc',s.lane,TOP,'#ff767b',4,s.lane,540);if(Math.abs(s.x-s.lane)<43)damagePlayer(s,20);}}
+    if(s.phase!=='play')return;
     const active=s.enemies.filter(e=>!e.dead);s.peakEnemies=Math.max(s.peakEnemies,active.length);
     for(let bi=0,limit=s.balls.length;bi<limit;bi++){const b=s.balls[bi];if(!b||b.dead)continue;b.trail??=[];b.trailClock=(b.trailClock||0)+dt;if(b.trailClock>=.025){b.trail.push({x:b.x,y:b.y});if(b.trail.length>7)b.trail.shift();b.trailClock=0;}b.age+=dt;b.lock=Math.max(0,b.lock-dt);b.x+=b.vx*dt;b.y+=b.vy*dt;
       if(b.x-b.r<LEFT){b.x=LEFT+b.r;b.vx=Math.abs(b.vx);b.banks++;fx(s,'wall',b.x,b.y,TYPES[b.type].color,.35);}if(b.x+b.r>RIGHT){b.x=RIGHT-b.r;b.vx=-Math.abs(b.vx);b.banks++;fx(s,'wall',b.x,b.y,TYPES[b.type].color,.35);}

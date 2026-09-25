@@ -24,7 +24,7 @@ BALL x PIT：取反彈戰鬥、局內組合、局外成長的三層循環。Pegl
 
 ## 驗證及限制
 
-42 項 Node 規則測試涵蓋反彈、回收、進化、數量上限、存檔、頭目流程，以及新版槍口座標、視覺暫態回收與舊存檔相容。0.4 的瀏覽器驗證從 repo 根目錄執行 `npx playwright test --config=playwright.rift.config.cjs`；透過真正的靜態 HTTP 伺服器測試，使用 localStorage 重載續玩。結果與截圖在 `test-results/`，CI 會保存 14 天。
+43 項 Node 規則測試涵蓋反彈、回收、進化、數量上限、存檔、頭目流程，以及新版槍口座標、視覺暫態回收與舊存檔相容。0.4 的瀏覽器驗證從 repo 根目錄執行 `npx playwright test --config=playwright.rift.config.cjs`；透過真正的靜態 HTTP 伺服器測試，使用 localStorage 重載續玩。結果與截圖在 `test-results/`，CI 會保存 14 天。
 
 美術截圖使用明確標示的 QA 預設場景，覆蓋 Chromium 1440×900、926×428、430×932 三種尺寸；頭目與進化特效測試會直接配置狀態，不代表自然遊玩的進度或人類勝率。密集繪製基準包含 70 敵人和 140 球，僅量測 CI 瀏覽器 Canvas 繪製呼叫，不能當作實機 FPS。
 
