@@ -41,11 +41,11 @@ test('a returning player escapes the old cache and keeps their save',async({page
   upgraded=true;
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto(`${origin}/Zia/rift-forge/?qa=1`);
-  await expect(page.locator('.stamp')).toContainText('戰鬥美術版 0.7.0');
+  await expect(page.locator('.stamp')).toContainText('戰鬥美術版 0.8.0');
   await expect(page.locator('#resume')).toBeEnabled();
   expect(await page.evaluate(()=>localStorage.getItem('rift-forge.v1.run'))).toBe(run);
   expect(await page.evaluate(()=>localStorage.getItem('rift-forge.v1.meta'))).toBe(meta);
-  expect(await page.evaluate(()=>window.__RIFT.renderer.status.loaded)).toBe(7);
+  expect(await page.evaluate(()=>window.__RIFT.renderer.status.loaded)).toBe(9);
   expect(await page.evaluate(()=>[...document.scripts].every(s=>/\?v=[a-f0-9]{12}$/.test(s.src)))).toBe(true);
   await expect.poll(()=>page.evaluate(async()=>{
    const cache=await caches.open('zia-runtime-workspace-2-lab');return(await cache.keys()).filter(r=>r.url.includes('/rift-forge/')).length;

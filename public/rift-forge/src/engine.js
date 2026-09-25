@@ -33,6 +33,18 @@ const RF = (() => {
     merchant:{name:'迷途的鑄匠',tag:'TRADE / 交易',desc:'一位鑄匠願意替你的彈核刻上折射紋路。',color:'#9dd99a',choices:[{id:'bank',title:'購買折射刻印',desc:'花費 18 碎晶；折射刻印 +1（上限 4）。'},{id:'coins',title:'交換沿途見聞',desc:'獲得 8 碎晶，不需支付費用。'}]}
   };
   const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
+  const HERO_FORMS=[
+    {min:1,tier:1,name:'裂隙行者',sprite:'hero',color:'#d9b580',size:89,desc:'輕裝與赤紅短披風'},
+    {min:5,tier:2,name:'重鑄先鋒',sprite:'hero-veteran',color:'#f0bd73',size:94,desc:'重鑄肩甲、金邊披風與強化拳砲'},
+    {min:10,tier:3,name:'覺醒鑄師',sprite:'hero-ascendant',color:'#91e9ee',size:98,desc:'覺醒重甲、冠盔與發光符文'},
+    {min:12,tier:4,name:'熔爐化身',sprite:'hero-ascendant',color:'#ffe4a2',size:100,desc:'完整符文環、能量紋章與武器光冕'}
+  ];
+  const safeLevel=n=>Number.isFinite(n)?clamp(Math.floor(n),1,999):1;
+  const heroForm=level=>HERO_FORMS.filter(f=>safeLevel(level)>=f.min).at(-1);
+  function spellArt(id,rank=1,heroLevel=1){
+    rank=clamp(safeLevel(rank),1,3);const evolved=RECIPES.some(r=>r.out===id);
+    return {rank,grade:rank+(evolved?1:0),scale:Math.min(1.95,(.9+(rank-1)*.23+(evolved?.52:0))*(1+Math.min(19,safeLevel(heroLevel)-1)*.01)),heroTier:heroForm(heroLevel).tier};
+  }
   const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
   function rand(s){s.rng=(Math.imul(1664525,s.rng)+1013904223)>>>0;return s.rng/4294967296;}
   function shuffle(s,a){a=a.slice();for(let i=a.length-1;i>0;i--){let j=Math.floor(rand(s)*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
@@ -55,7 +67,7 @@ const RF = (() => {
     const hp=boss?boss.hp:stats[1]*(1+(s.wave-1)*0.25);
     s.enemies.push({id:++s.uid,kind,...(boss?{bossId,attack:0,summon:8}:{}),x,y,r:boss?boss.r:stats[0],hp,maxHp:hp,speed:stats[2],slow:0,burn:0,poison:0,burnD:0,poisonD:0,burnOwner:'ember',poisonOwner:'thorn',flash:0,cast:0,age:0,shot:boss?2.2:2+rand(s)*2,seed:rand(s)*6.28,dead:false});
   }
-  function fx(s,type,x,y,color,size=1,x2=0,y2=0,core=''){if(s.fx.length>=210)return;const life=type==='pulse'?.75:type==='death'?.6:type==='muzzle'?.18:type==='wall'?.28:['nova','bloom','siphon'].includes(type)?.65:type==='impact'?.48:.4;s.fx.push({type,x,y,color,size,x2,y2,core,life,max:life});}
+  function fx(s,type,x,y,color,size=1,x2=0,y2=0,core='',level=1,heroLevel=s.level){if(s.fx.length>=210)return;const life=['ascend','levelup'].includes(type)?1.1:type==='pulse'?.75:type==='death'?.6:type==='muzzle'?.18:type==='wall'?.28:['nova','bloom','siphon'].includes(type)?.65:type==='impact'?.48:.4;s.fx.push({type,x,y,color,size,x2,y2,core,level,heroLevel,life,max:life});}
   function event(s,type){if(s.events.length<12)s.events.push(type);}
   function hit(s,e,d,owner,secondary=false){if(e.dead||d<=0)return;
     const actual=Math.min(e.hp,d);e.hp-=actual;e.flash=Math.max(e.flash,!secondary?.12:actual>2?.07:0);s.damage[owner]=(s.damage[owner]||0)+actual;
@@ -93,43 +105,43 @@ const RF = (() => {
   }
   function impact(s,b,e){
     const id=b.type,lv=b.level,kind=TYPES[id];const d=b.power*(1+s.passives.bank*.18*Math.min(3,b.banks));
-    hit(s,e,d,id);fx(s,'impact',b.x,b.y,kind.color,1,b.vx,b.vy,id);event(s,'hit');
+    hit(s,e,d,id);fx(s,'impact',b.x,b.y,kind.color,1,b.vx,b.vy,id,lv,b.heroLevel||s.level);event(s,'hit');
     const fire=id==='ember'||id==='steam',cold=id==='frost'||id==='steam';
     if(fire){e.burn=3;e.burnD=4+lv*3;e.burnOwner=id;}if(cold)e.slow=2;
     if(id==='thorn'||id==='plague'){e.poison=4;e.poisonD=4+lv*4;e.poisonOwner=id;}
-    if(id==='leech'||id==='plague'){s.hp=Math.min(s.maxHp,s.hp+(id==='plague'?1.1:.35));fx(s,'siphon',e.x,e.y,kind.color,1,s.x,518,id);}
+    if(id==='leech'||id==='plague'){s.hp=Math.min(s.maxHp,s.hp+(id==='plague'?1.1:.35));fx(s,'siphon',e.x,e.y,kind.color,1,s.x,518,id,lv,b.heroLevel||s.level);}
     if(id==='spark'||id==='tempest'){
       let last=e;const seen=new Set([e.id]);for(let n=0;n<(id==='tempest'?4:2);n++){
         const near=s.enemies.filter(q=>!q.dead&&!seen.has(q.id)&&dist(q,last)<160).sort((a,c)=>dist(a,last)-dist(c,last))[0];
-        if(!near)break;hit(s,near,d*.55,id,true);fx(s,'arc',last.x,last.y,kind.color,1,near.x,near.y,id);seen.add(near.id);last=near;
+        if(!near)break;hit(s,near,d*.55,id,true);fx(s,'arc',last.x,last.y,kind.color,1,near.x,near.y,id,lv,b.heroLevel||s.level);seen.add(near.id);last=near;
       }
     }
     if(id==='steam'||id==='plague'){
-      fx(s,id==='steam'?'nova':'bloom',e.x,e.y,kind.color,id==='steam'?3:2.2,0,0,id);
+      fx(s,id==='steam'?'nova':'bloom',e.x,e.y,kind.color,id==='steam'?3:2.2,0,0,id,lv,b.heroLevel||s.level);
       for(const q of s.enemies)if(!q.dead&&q.id!==e.id&&dist(q,e)<(id==='steam'?86:68)){
         if(id==='steam'){hit(s,q,d*.65,id,true);q.slow=1.5;q.burn=3;q.burnD=9;q.burnOwner=id;}
         else{q.poison=4;q.poisonD=14;q.poisonOwner=id;}
       }
     }
     if((id==='echo'||id==='tempest')&&b.generation===0&&!b.split){
-      b.split=true;for(const a of [-.65,.65]){const angle=Math.atan2(b.vy,b.vx)+a;ball(s,id,lv,b.x,b.y,Math.cos(angle)*450,Math.sin(angle)*450,b.power*.42,1);}
+      b.split=true;for(const a of [-.65,.65]){const angle=Math.atan2(b.vy,b.vx)+a;ball(s,id,lv,b.x,b.y,Math.cos(angle)*450,Math.sin(angle)*450,b.power*.42,1,b.heroLevel||s.level);}
     }
   }
-  function ball(s,type,level,x,y,vx,vy,power,generation=0){if(s.balls.length>=140)return;s.balls.push({type,level,x,y,vx,vy,power,generation,r:generation?4:6,age:0,banks:0,last:-1,lock:0,split:false,dead:false});s.peakBalls=Math.max(s.peakBalls,s.balls.length);}
+  function ball(s,type,level,x,y,vx,vy,power,generation=0,heroLevel=s.level){if(s.balls.length>=140)return;s.balls.push({type,level,heroLevel,x,y,vx,vy,power,generation,r:generation?4:6,age:0,banks:0,last:-1,lock:0,split:false,dead:false});s.peakBalls=Math.max(s.peakBalls,s.balls.length);}
   function shoot(s){
     if(s.balls.length>=140)return;
     let tx=s.aimX,ty=Math.min(450,s.aimY);
     if(s.auto){const target=s.enemies.filter(e=>!e.dead).sort((a,b)=>(b.y*1.8-Math.abs(b.x-s.x))-(a.y*1.8-Math.abs(a.x-s.x)))[0];if(target){tx=target.x;ty=target.y;}else{tx=480+Math.sin(s.time)*180;ty=140;}}
     const muzzleX=s.x+14,muzzleY=493;let dx=tx-muzzleX,dy=Math.min(-55,ty-muzzleY);const len=Math.hypot(dx,dy);dx/=len;dy/=len;
     const item=s.loadout[s.shotIndex++%s.loadout.length],power=TYPES[item.id].power*(1+(item.level-1)*.6)*(1+s.forge*.045)*(1+s.passives.power*.22)*Math.pow(.95,s.passives.haste)*s.alterations.power*(s.pact?.wave===s.wave?s.pact.damage:1);
-    s.fireAnim=.14;s.lastCore=item.id;s.aimAngle=Math.atan2(dy,dx);ball(s,item.id,item.level,muzzleX,muzzleY,dx*470,dy*470,power);fx(s,'muzzle',muzzleX,muzzleY,TYPES[item.id].color,.7,dx,dy,item.id);
+    s.fireAnim=.14;s.lastCore=item.id;s.aimAngle=Math.atan2(dy,dx);ball(s,item.id,item.level,muzzleX,muzzleY,dx*470,dy*470,power);fx(s,'muzzle',muzzleX,muzzleY,TYPES[item.id].color,.7,dx,dy,item.id,item.level,s.level);
     s.shotCd=.27*Math.pow(.85,s.passives.haste)*Math.pow(1.07,s.passives.power);
   }
   function damagePlayer(s,d){if(s.phase!=='play'||s.invuln>0)return;s.hp=Math.max(0,s.hp-d*(s.pact?.wave===s.wave?s.pact.incoming:1));s.invuln=.55;fx(s,'hurt',s.x,520,'#f37878',2);event(s,'hurt');if(s.hp<=0){s.phase='lose';s.offers=[];event(s,'lose');}}
   function ready(s){return RECIPES.filter(r=>s.loadout.some(i=>i.id===r.a&&i.level===3)&&s.loadout.some(i=>i.id===r.b&&i.level===3));}
   function evolve(s,out){const r=ready(s).find(r=>r.out===out);if(!r)return false;s.loadout=s.loadout.filter(i=>i.id!==r.a&&i.id!==r.b);s.loadout.push({id:out,level:1});event(s,'evolve');fx(s,'ring',s.x,500,TYPES[out].color,5);return true;}
   function makeOffers(s){
-    const balls=[];for(const [id,t] of Object.entries(TYPES)){const own=s.loadout.find(i=>i.id===id);if(own&&own.level<3)balls.push({kind:'ball',id,title:t.name+' '+(own.level+1)+' 階',desc:'直接傷害提高，保留球核特性。',tag:'強化已有彈核'});else if(!own&&s.loadout.length<4&&!RECIPES.some(r=>r.out===id))balls.push({kind:'ball',id,title:t.name+' 1 階',desc:t.desc,tag:'新彈核 · 佔用 1 格'});}
+    const balls=[];for(const [id,t] of Object.entries(TYPES)){const own=s.loadout.find(i=>i.id===id);if(own&&own.level<3)balls.push({kind:'ball',id,title:t.name+' '+(own.level+1)+' 階',desc:'直接傷害提高，彈核外形、拖尾與命中特效同步強化。',tag:'強化已有彈核'});else if(!own&&s.loadout.length<4&&!RECIPES.some(r=>r.out===id))balls.push({kind:'ball',id,title:t.name+' 1 階',desc:t.desc,tag:'新彈核 · 佔用 1 格'});}
     const pool=balls.concat(Object.entries(PASSIVES).filter(([id])=>s.passives[id]<4).map(([id,p])=>({kind:'passive',id,title:p.name,desc:p.desc,tag:'刻印 · 含明確取捨'})));
     const own=shuffle(s,balls.filter(o=>s.loadout.some(i=>i.id===o.id)))[0];
     const picks=shuffle(s,pool.filter(o=>o!==own)).slice(0,own?2:3);if(own)picks.unshift(own);
@@ -178,7 +190,7 @@ const RF = (() => {
     }
     for(const b of s.bullets){b.x+=b.vx*dt;b.y+=b.vy*dt;b.life-=dt;if(Math.hypot(b.x-s.x,b.y-520)<18+b.r){damagePlayer(s,8);b.life=0;}if(b.x<LEFT-30||b.x>RIGHT+30||b.y>570)b.life=0;}
     s.enemies=s.enemies.filter(e=>!e.dead);s.balls=s.balls.filter(b=>!b.dead);s.bullets=s.bullets.filter(b=>b.life>0);
-    if(s.phase==='play'&&s.xp>=s.xpNeed){s.xp-=s.xpNeed;s.level++;s.xpNeed=Math.round(s.xpNeed*1.18+2);s.phase='draft';makeOffers(s);event(s,'draft');}
+    if(s.phase==='play'&&s.xp>=s.xpNeed){s.xp-=s.xpNeed;s.level++;s.xpNeed=Math.round(s.xpNeed*1.18+2);s.phase='draft';makeOffers(s);const form=heroForm(s.level),ascended=HERO_FORMS.some(f=>f.min===s.level);fx(s,ascended?'ascend':'levelup',s.x,520,form.color,form.tier);if(ascended)event(s,'ascend');event(s,'draft');}
   }
   function settle(s,m){m=metaSafe(m);if(!['win','lose'].includes(s.phase)||s.paid)return m;s.paid=true;const reward=Math.floor(s.coins*.7)+s.wave*5+(s.phase==='win'?80:0);m.credits+=reward;m.runs++;if(s.phase==='win')m.wins++;m.best=Math.max(m.best,s.kills);return m;}
   function cost(m,k){return 50+metaSafe(m)[k]*45;}
@@ -198,11 +210,12 @@ const RF = (() => {
     if(raw.pact&&(!Number.isInteger(raw.pact.wave)||raw.pact.damage!==1.35||raw.pact.incoming!==1.25))return null;
     if(raw.bossesDefeated&&(!Array.isArray(raw.bossesDefeated)||raw.bossesDefeated.length>3||raw.bossesDefeated.some(id=>!BOSSES[id])))return null;
     const s=Object.assign(create({},1),raw);s.events=[];s.fx=[];s.ghosts=[];s.texts=[];s.fireAnim=0;
+    s.balls=s.balls.map(b=>({...b,heroLevel:safeLevel(b.heroLevel??s.level)}));
     // Existing 0.5 runs retain their current wave and do not replay missed events.
     if(raw.eventOrder===undefined)s.eventIndex=[3,6,8].filter(w=>w<=s.wave).length;
     for(const e of s.enemies)if(e.kind==='boss'){e.bossId??='bell';e.attack??=0;e.summon??=8;e.y=Math.max(232,e.y);s.encounter=e.bossId;}
     if(s.phase==='pause')s.phase='play';return s;
   }catch{return null;}}
-  return {W,H,LEFT,RIGHT,TOP,FLOOR,TYPES,RECIPES,PASSIVES,BOSSES,ENCOUNTERS,clamp,rand,create,spawn,step,hit,impact,ball,ready,evolve,makeOffers,applyOffer,reroll,pulse,dash,settle,buy,cost,metaSafe,snapshot,restore,beginBoss,openEncounter,eventChoices,chooseEncounter};
+  return {W,H,LEFT,RIGHT,TOP,FLOOR,TYPES,RECIPES,HERO_FORMS,heroForm,spellArt,PASSIVES,BOSSES,ENCOUNTERS,clamp,rand,create,spawn,step,hit,impact,ball,ready,evolve,makeOffers,applyOffer,reroll,pulse,dash,settle,buy,cost,metaSafe,snapshot,restore,beginBoss,openEncounter,eventChoices,chooseEncounter};
 })();
 if(typeof module!=='undefined')module.exports=RF;
