@@ -1,7 +1,7 @@
 const {test,expect}=require('@playwright/test');
 const fs=require('node:fs');
 test.use({hasTouch:true,isMobile:true,deviceScaleFactor:2,viewport:{width:926,height:428}});
-async function start(page){await page.goto('?qa=1');await expect(page.locator('#start')).toBeEnabled();await page.locator('#start').tap();await expect(page.locator('#layer')).toBeHidden();await expect(page.locator('#move-rail')).toBeVisible();}
+async function start(page){await page.addInitScript(()=>{if(!localStorage.getItem('rift-forge.v1.moveMode'))localStorage.setItem('rift-forge.v1.moveMode',JSON.stringify('rail'));});await page.goto('?qa=1');await expect(page.locator('#start')).toBeEnabled();await page.locator('#start').tap();await expect(page.locator('#layer')).toBeHidden();await expect(page.locator('#move-rail')).toBeVisible();}
 async function pointer(page,selector,type,id,x,y){await page.locator(selector).dispatchEvent(type,{pointerId:id,pointerType:'touch',isPrimary:id===31,clientX:x,clientY:y,bubbles:true,cancelable:true,buttons:type==='pointerup'||type==='pointercancel'?0:1});}
 test('trusted drag stops on release, including release outside the rail',async({page})=>{
  await start(page);await page.evaluate(()=>{window.pointerTrace=[];for(const type of ['pointerdown','pointermove','pointerup','pointercancel','gotpointercapture','lostpointercapture','resize'])window.addEventListener(type,e=>window.pointerTrace.push({type,id:e.pointerId,x:e.clientX,target:e.target.id,buttons:e.buttons,time:window.__RIFT.state.time}),true);});const r=await page.locator('#move-rail').boundingBox(),before=await page.evaluate(()=>window.__RIFT.state.x);

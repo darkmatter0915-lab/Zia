@@ -54,3 +54,13 @@
 @media(max-width:650px) and (orientation:portrait){#dock{gap:12px;align-items:center;justify-content:space-between}.deck{order:1}.moves{order:2}.actions{order:3}.rail-label{display:none}#rotate{top:calc(var(--arena-bottom,60vh) + 12px);bottom:auto}.core{min-width:70px}}
 @media(max-width:420px) and (orientation:portrait){.vital{width:70px}.controls{gap:4px}.controls button{font-size:10px;padding:7px 5px}}
 @media(max-width:760px) and (orientation:landscape){.vital .wordmark{white-space:nowrap;letter-spacing:.13em}}
+/* v0.5: stronger action feedback and a visible startup recovery surface. */
+#boot-status{position:fixed;inset:0;z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:#091724f7;text-align:center;padding:24px}
+#boot-status[hidden]{display:none}#boot-status strong{font-size:30px;letter-spacing:.15em;color:var(--gold)}#boot-detail{max-width:330px;line-height:1.8;color:#bdcdd2}#boot-status[data-failed] strong{color:#ffbe9e}
+#dash{background:linear-gradient(to top,#9fdac72a var(--cooldown,0%),transparent var(--cooldown,0%)),#1b2c38}
+#pulse{background:linear-gradient(to right,#be985a45 var(--charge,0%),transparent var(--charge,0%)),#1b2c38}
+.actions button:disabled{opacity:.65}#dash:disabled{color:#b1c3c8}#pulse.ready{background:#d8bd87;color:#18252a;box-shadow:0 0 20px #e4bd6344}
+.moves button{font-size:17px;border-color:#7b9c9e;background:linear-gradient(#274653,#142936);touch-action:none}
+.moves button:active{background:#597e82;border-color:#efdab1;box-shadow:0 0 16px #a8d8d833}
+@media(any-pointer:coarse){.moves button{width:58px;min-height:54px}}
+@media(prefers-reduced-motion:reduce){.choice{transition:none}.choice:not(:disabled):hover{transform:none}}
