@@ -78,3 +78,5 @@ node scripts/rift-forge/simulate-characters.cjs
 密集場景為 70 敵人、140 彈球、90 特效、70 狀態；最後一次 headless Canvas 繪製平均耗時為 Chromium 完整 42.76 ms／精簡 34.10 ms，WebKit 完整 53.13 ms／精簡 37.03 ms。這不是實機 FPS。兩次基線／修改版對照的分布重疊、雜訊大，不能宣稱穩定加速；目前可驗證的是裝飾繪製有上限且保留威脅資訊。原始量測已隨審閱包附上。
 
 尚未執行實體 iPhone / Android 多指、真實 Safari 音效、長時間發熱耗電或低階手機 FPS 測試。以上為合併前本機驗證紀錄；正式發布結果另以 GitHub PR、Actions 部署與線上核對為準。後續章節工作尚未實作或核定。
+
+發布前 GitHub CI 另外發現 Windows `core.autocrlf` 使工作檔與提交檔換行不同，造成入口資源雜湊不符。本批以遊戲目錄的 `.gitattributes` 固定 HTML／JS／CSS／JSON 為 LF，WebP 保持二進位；重新產生入口雜湊，並以提交暫存區的原始位元核對，確保 Windows 與 Linux CI 使用相同資源內容。
