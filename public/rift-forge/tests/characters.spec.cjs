@@ -43,5 +43,7 @@ test('mobile role cards and replay choice remain usable, including chapter two l
   await page.screenshot({path:`${output(info)}/characters-${width}x${height}.png`});await page.locator('#character-done').click();
  }
  await page.locator('#chapter-2').click();await expect(page.locator('.chapter-panel')).toContainText('霜衛');await page.locator('#enter-chapter-2').click();await page.evaluate(()=>window.__RIFT.freeze());expect(await page.evaluate(()=>window.__RIFT.state.loadout)).toEqual(['frost','thorn','leech'].map(id=>({id,level:2})));
- await expect(page.locator('#pulse')).toContainText('霜環');await page.evaluate(()=>{const q=window.__RIFT;q.state.phase='lose';q.results();});await page.locator('#choose-next-character').click();await page.locator('#character-forge').click();await page.locator('#character-done').click();expect(await page.evaluate(()=>({chapter:window.__RIFT.state.chapter,character:window.__RIFT.state.character}))).toEqual({chapter:2,character:'forge'});expect(errors).toEqual([]);
+ // Follow the real terminal-phase transition, including its delayed results panel.
+ // Calling results() directly leaves a second frame-driven panel update pending.
+ await expect(page.locator('#pulse')).toContainText('霜環');await page.evaluate(()=>{const q=window.__RIFT;q.state.phase='lose';q.phaseView();});await page.locator('#choose-next-character').click();await page.locator('#character-forge').click();await page.locator('#character-done').click();expect(await page.evaluate(()=>({chapter:window.__RIFT.state.chapter,character:window.__RIFT.state.character}))).toEqual({chapter:2,character:'forge'});expect(errors).toEqual([]);
 });
