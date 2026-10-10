@@ -22,28 +22,60 @@ function makeRenderer(canvas){
  b.strokeStyle='#819089';b.strokeRect(107,77,746,466);b.strokeStyle='#293d49';b.strokeRect(103,73,754,474);
  // Corner brasswork.
  for(const x of [105,855])for(const y of [76,544]){b.save();b.translate(x,y);b.rotate(x>480?Math.PI:0);poly(b,[[-7,-7],[22,-7],[22,-3],[3,-3],[3,14],[-2,14],[-2,2],[-7,2]],'#927456');b.restore();}
- const status={ready:false,failed:[],loaded:0,scenery:'loading'};
+ const status={ready:false,failed:[],slow:[],pending:0,loaded:0,scenery:'loading'};
  // Decorative art never prevents entering combat if a download fails.
  const floor=new Image();
  floor.onload=()=>{b.drawImage(floor,112,82,736,404);b.fillStyle='#071a2424';b.fillRect(112,82,736,404);status.scenery='ready';dispatchEvent(new Event('rift-art-ready'));};
  floor.onerror=()=>{status.scenery='unavailable';};floor.src=window.RIFT_RELEASE.floor;
  const frostStone=document.createElement('canvas');frostStone.width=960;frostStone.height=600;const fb=frostStone.getContext('2d');fb.drawImage(stone,0,0);fb.fillStyle='#41568a38';fb.fillRect(112,82,736,404);fb.strokeStyle='#a5d6eb';fb.strokeRect(107,77,746,466);label(fb,'II / THE FROSTBONE COURT',126,100,10,'#b7dbea');
  const frostFloor=new Image();status.frostScenery='loading';frostFloor.onload=()=>{fb.drawImage(frostFloor,112,82,736,404);fb.fillStyle='#08182924';fb.fillRect(112,82,736,404);status.frostScenery='ready';dispatchEvent(new Event('rift-art-ready'));};frostFloor.onerror=()=>{status.frostScenery='unavailable';};frostFloor.src=window.RIFT_RELEASE.frostFloor;
- const sprites={},flashSprites={},iceSprites={},spriteNames=Object.keys(window.RIFT_RELEASE.sprites);status.total=spriteNames.length;
+ const sprites={},flashSprites={},iceSprites={},portraitCache={},spriteSources={},spriteNames=Object.keys(window.RIFT_RELEASE.sprites);status.total=spriteNames.length;
  const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
  let quality='full',drawCount=0,drawMs=0,terminalTime=null,previousState=null;
  const metrics={frames:0,drawCalls:0,averageDrawMs:0,quality:'full',assets:status,viewport:null};
  const cosmeticEffects=new Set(['impact','wall','muzzle','catch','death','shatter','siphon']);
+ let loadGeneration=0,loading=null,cancelLoad=()=>{};
  function load(){
-  status.ready=false;status.failed=[];status.loaded=0;
-  return Promise.all(spriteNames.map(name=>new Promise(resolve=>{
-   const im=new Image();let settled=false;
-   const finish=ok=>{if(settled)return;settled=true;clearTimeout(timeout);if(ok){sprites[name]=im;
-    const mask=document.createElement('canvas');mask.width=im.width;mask.height=im.height;const m=mask.getContext('2d');m.drawImage(im,0,0);m.globalCompositeOperation='source-in';m.fillStyle='#fff7dc';m.fillRect(0,0,im.width,im.height);flashSprites[name]=mask;
-    const ice=document.createElement('canvas');ice.width=im.width;ice.height=im.height;const ic=ice.getContext('2d');ic.drawImage(im,0,0);ic.globalCompositeOperation='source-in';ic.fillStyle='#99e3f1';ic.fillRect(0,0,ice.width,ice.height);iceSprites[name]=ice;status.loaded++;
-   }else status.failed.push(name);dispatchEvent(new Event('rift-assets-progress'));resolve(ok);};
-   const timeout=setTimeout(()=>finish(false),12000);im.onload=()=>finish(im.width===768&&im.height===512);im.onerror=()=>finish(false);im.src=window.RIFT_RELEASE.sprites[name];
-  }))).then(results=>{status.ready=results.every(Boolean);return status.ready;});
+  if(status.ready)return Promise.resolve(true);
+  // A second click during a healthy attempt shares its work. Only failed/slow
+  // attempts can be restarted; callbacks from a replaced attempt are inert.
+  if(loading&&!status.failed.length&&!status.slow.length)return loading;
+  const generation=++loadGeneration;cancelLoad();const cancellations=[];
+  cancelLoad=()=>cancellations.forEach(cancel=>cancel());
+  const states=new Map(spriteNames.map(name=>[name,spriteSources[name]===window.RIFT_RELEASE.sprites[name]?'loaded':'waiting']));
+  function publish(){
+   if(generation!==loadGeneration)return;
+   const wasReady=status.ready;
+   status.loaded=[...states.values()].filter(value=>value==='loaded').length;
+   status.failed=spriteNames.filter(name=>states.get(name)==='failed');
+   status.slow=spriteNames.filter(name=>states.get(name)==='slow');
+   status.pending=status.total-status.loaded-status.failed.length;
+   status.ready=status.loaded===status.total;
+   dispatchEvent(new Event('rift-assets-progress'));
+   if(status.ready&&!wasReady)dispatchEvent(new Event('rift-assets-ready'));
+  }
+  status.ready=false;publish();
+  loading=Promise.all(spriteNames.map(name=>new Promise(resolve=>{
+   if(states.get(name)==='loaded'){resolve(true);return;}
+   const im=new Image(),source=window.RIFT_RELEASE.sprites[name];let resolved=false,timer;
+   const settle=value=>{if(!resolved){resolved=true;resolve(value);}};
+   const cleanup=()=>{clearTimeout(timer);im.onload=null;im.onerror=null;};
+   cancellations.push(()=>{cleanup();settle(false);});
+   const finish=ok=>{
+    if(generation!==loadGeneration||['loaded','failed'].includes(states.get(name)))return;
+    cleanup();
+    if(ok){try{
+     const mask=document.createElement('canvas');mask.width=im.naturalWidth;mask.height=im.naturalHeight;const m=mask.getContext('2d');m.drawImage(im,0,0);m.globalCompositeOperation='source-in';m.fillStyle='#fff7dc';m.fillRect(0,0,mask.width,mask.height);
+     const ice=document.createElement('canvas');ice.width=im.naturalWidth;ice.height=im.naturalHeight;const ic=ice.getContext('2d');ic.drawImage(im,0,0);ic.globalCompositeOperation='source-in';ic.fillStyle='#99e3f1';ic.fillRect(0,0,ice.width,ice.height);
+     sprites[name]=im;flashSprites[name]=mask;iceSprites[name]=ice;spriteSources[name]=source;delete portraitCache[name];
+    }catch{ok=false;}}
+    states.set(name,ok?'loaded':'failed');publish();settle(ok);
+   };
+   // A deadline offers recovery controls; it must not discard a later success.
+   timer=setTimeout(()=>{if(generation!==loadGeneration||states.get(name)!=='waiting')return;states.set(name,'slow');publish();settle(false);},12000);
+   im.onload=()=>finish(im.naturalWidth===768&&im.naturalHeight===512);im.onerror=()=>finish(false);im.src=source;
+  }))).then(()=>generation===loadGeneration&&status.ready);
+  return loading;
  }
  const ready=load();
  function resize(){
@@ -66,7 +98,6 @@ function makeRenderer(canvas){
  const elements=makeElementArt({glow,poly,circle,reduced,getQuality:()=>quality});
  const actorSize={hero:89,guard:86,runner:79,seer:90,boss:163,maw:170,oracle:164,iceguard:92,icehound:100,icewitch:102,reaper:176,queen:184};
  const actorName=e=>e.kind==='boss'?(RF.BOSSES[e.bossId||'bell']?.sprite||'boss'):e.kind;
- const portraitCache={};
  function portrait(name){if(!portraitCache[name]&&sprites[name]){const tile=document.createElement('canvas');tile.width=tile.height=256;tile.getContext('2d').drawImage(sprites[name],0,0,256,256,0,0,256,256);portraitCache[name]=tile.toDataURL('image/webp');}return portraitCache[name]||'';}
  function sprite(c,name,frame,x,foot,size,alpha=1,lean=0,flash=0,frost=0){const im=sprites[name];if(!im)return;
   c.save();c.translate(x,foot);c.rotate(lean);c.globalAlpha*=alpha;const sx=(frame%3)*256,sy=Math.floor(frame/3)*256;
