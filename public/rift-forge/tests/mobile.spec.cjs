@@ -30,10 +30,23 @@ test('control preference survives reload and preserves button input',async({page
  await start(page);await page.locator('#pause').tap();await page.locator('#move-mode').tap();await expect(page.locator('#move-mode')).toHaveText('移動：按鈕');await page.locator('#continue').tap();await expect(page.locator('#move-rail')).toBeHidden();await expect(page.locator('#left')).toBeVisible();
  await page.reload();await expect(page.locator('#resume')).toBeEnabled();await page.locator('#resume').tap();await expect(page.locator('#move-rail')).toBeHidden();const r=await page.locator('#left').boundingBox(),x=await page.evaluate(()=>window.__RIFT.state.x);await page.mouse.move(r.x+20,r.y+20);await page.mouse.down();await page.waitForTimeout(150);await page.mouse.up();expect(await page.evaluate(()=>window.__RIFT.state.x)).toBeLessThan(x-15);
 });
-test('pause stops repeated canvas work and suspends sound, resume restarts both',async({page})=>{
- await start(page);await expect.poll(()=>page.evaluate(()=>window.__RIFT.audioState)).toBe('running');await page.locator('#pause').tap();await expect.poll(()=>page.evaluate(()=>window.__RIFT.audioState)).toBe('suspended');await page.waitForTimeout(150);
+test('pause stops repeated canvas work and simulation, resume restarts both',async({page})=>{
+ await start(page);
+ // This tests pause/audio, so keep natural level-up dialogs from racing the poll.
+ // Simulation still runs normally, allowing the final resume assertion to test time.
+ await page.evaluate(()=>{const s=window.__RIFT.state;s.enemies=[];s.balls=[];s.nextSpawn=99;s.shotCd=99;s.xp=0;});
+ await page.locator('#pause').tap();await page.waitForTimeout(150);
  const idle=await page.evaluate(()=>({draws:window.__RIFT.renderer.metrics.drawCalls,time:window.__RIFT.state.time}));await page.waitForTimeout(300);const after=await page.evaluate(()=>({draws:window.__RIFT.renderer.metrics.drawCalls,time:window.__RIFT.state.time}));expect(after).toEqual(idle);
- await page.locator('#continue').tap();await expect.poll(()=>page.evaluate(()=>window.__RIFT.audioState)).toBe('running');await expect.poll(()=>page.evaluate(()=>window.__RIFT.state.time)).toBeGreaterThan(idle.time);expect(await page.evaluate(()=>window.__RIFT.renderer.metrics.drawCalls)).toBeGreaterThan(idle.draws);
+ await page.locator('#continue').tap();await expect.poll(()=>page.evaluate(()=>window.__RIFT.state.time)).toBeGreaterThan(idle.time);expect(await page.evaluate(()=>window.__RIFT.renderer.metrics.drawCalls)).toBeGreaterThan(idle.draws);
+});
+test('pause suspends sound and resume restarts supported Web Audio',async({page})=>{
+ await start(page);
+ const supported=await page.evaluate(()=>typeof(window.AudioContext||window.webkitAudioContext)==='function');
+ test.skip(!supported,'This browser build has no Web Audio API; canvas/simulation pause is tested separately.');
+ await page.evaluate(()=>{const s=window.__RIFT.state;s.enemies=[];s.balls=[];s.nextSpawn=99;s.shotCd=99;s.xp=0;});
+ await expect.poll(()=>page.evaluate(()=>window.__RIFT.audioState)).toBe('running');
+ await page.locator('#pause').tap();await expect.poll(()=>page.evaluate(()=>window.__RIFT.audioState)).toBe('suspended');
+ await page.locator('#continue').tap();await expect.poll(()=>page.evaluate(()=>window.__RIFT.audioState)).toBe('running');
 });
 test('touch layouts keep the court, four cores and controls clear at small sizes',async({page},info)=>{
  const errors=[];page.on('pageerror',e=>errors.push(e.message));await start(page);await page.evaluate(()=>{const q=window.__RIFT;q.freeze();q.state.loadout=['ember','frost','spark','echo'].map(id=>({id,level:2}));q.state.enemies=[];[['guard',270,180],['runner',540,240],['seer',690,155]].forEach(([kind,x,y])=>q.RF.spawn(q.state,kind,x,y));});
