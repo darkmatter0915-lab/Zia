@@ -1,0 +1,6 @@
+# Release URLs hash the exact checkout bytes on Windows and in Linux CI.
+*.html text eol=lf
+*.js text eol=lf
+*.css text eol=lf
+*.json text eol=lf
+*.webp -text

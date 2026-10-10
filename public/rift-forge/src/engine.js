@@ -1,6 +1,6 @@
 /* Rift Forge: independent, deterministic combat rules. No third-party game code. */
 const RF = (() => {
-  const W=960,H=600,LEFT=112,RIGHT=848,TOP=82,FLOOR=486;
+  const W=960,H=600,LEFT=112,RIGHT=848,TOP=82,FLOOR=486,HAZARD_PADDING=12;
   const TYPES={
     ember:{name:'燼火核',color:'#ff9b64',icon:'焰',power:12,desc:'命中附加灼燒，持續 3 秒。'},
     frost:{name:'霜晶核',color:'#8be3ef',icon:'霜',power:10,desc:'命中減速 45%，持續 2 秒。'},
@@ -31,6 +31,11 @@ const RF = (() => {
     1:{name:'沉沒鑄造所',english:'THE SUNKEN FOUNDRY',waves:8,duration:24,final:'bell',mid:{3:'maw',6:'oracle'},shops:[4,7],events:[3,6,8],mobs:['guard','runner','seer'],bosses:3},
     2:{name:'霜骸王庭',english:'THE FROSTBONE COURT',waves:6,duration:28,final:'queen',mid:{3:'reaper'},shops:[4],events:[2,5,6],mobs:['iceguard','icehound','icewitch'],bosses:2}
   };
+  const CHARACTERS={
+    forge:{id:'forge',name:'鍊金行者',english:'FORGE WALKER',color:'#f0bf81',subtitle:'火霜均衡・爆發驅散',desc:'火與冰交替削弱敵陣，以熔脈爆發清出空間。',pulseName:'熔脈爆發',pulseDesc:'清除敵彈、擊退敵人 70；造成 25 傷害（Boss 65），減速 45% 持續 2 秒。',passiveName:'熔爐本源',passiveDesc:'接球回復 1 能量，刻印加成另計。',unlockDesc:'初始角色',loadout:['ember','frost'],chapter2Loadout:['ember','frost','spark'],catchBonus:0,pulseDamage:25,pulseBossDamage:65,pulseSlow:2,pulsePoison:0,pulsePoisonDuration:0},
+    warden:{id:'warden',name:'霜衛',english:'RIME WARDEN',color:'#8be3ef',subtitle:'霜毒控制・回收循環',desc:'以冰霜延緩進軍、毒刺持續削血；接球更快重啟霜環。',pulseName:'霜環',pulseDesc:'清除敵彈、擊退敵人 70；造成 18 傷害（Boss 40），減速 45% 持續 4 秒，施加每秒 8 毒傷持續 4 秒。',passiveName:'寒潮回流',passiveDesc:'每次接球額外回復 1 能量，刻印加成另計。',unlockDesc:'擊破第一章最終 Boss「'+BOSSES.bell.name+'」',loadout:['frost','thorn'],chapter2Loadout:['frost','thorn','leech'],catchBonus:1,pulseDamage:18,pulseBossDamage:40,pulseSlow:4,pulsePoison:8,pulsePoisonDuration:4}
+  };
+  const character=sOrId=>{const id=typeof sOrId==='string'?sOrId:sOrId?.character;return Object.hasOwn(CHARACTERS,id)?CHARACTERS[id]:CHARACTERS.forge;};
   const chapter=s=>CHAPTERS[s.chapter||1]||CHAPTERS[1];
   const ENCOUNTERS={
     spring:{name:'月泉餘燼',tag:'REST / 休整',desc:'鑄造所深處，一池仍未冷卻的月泉映出你的輪廓。',color:'#8be3ef',choices:[{id:'heal',title:'飲下月泉',desc:'立即回復 32 生命。'},{id:'ward',title:'淬鍊護甲',desc:'本局生命上限 +12，並回復 12 生命。'}]},
@@ -47,6 +52,22 @@ const RF = (() => {
     {min:12,tier:4,name:'熔爐化身',sprite:'hero-ascendant',color:'#ffe4a2',size:100,desc:'完整符文環、能量紋章與武器光冕'}
   ];
   const safeLevel=n=>Number.isFinite(n)?clamp(Math.floor(n),1,999):1;
+  const basePower=(id,rank=1)=>TYPES[id].power*(1+(clamp(safeLevel(rank),1,3)-1)*.6);
+  const burnDamage=rank=>4+rank*3,poisonDamage=rank=>4+rank*4;
+  function elementDesc(id,rank){
+    const burn='灼燒 '+burnDamage(rank)+'/秒，持續 3 秒',poison='中毒 '+poisonDamage(rank)+'/秒，持續 4 秒';
+    return {
+      ember:burn+'。',frost:'減速 45%，持續 2 秒。',spark:'連鎖至最多 2 名附近敵人，各造成 55% 命中傷害。',thorn:poison+'。',
+      leech:'每次直接命中回復 0.35 生命。',echo:'首次命中分裂 2 顆子彈，各繼承 42% 發射傷害。',
+      steam:burn+'、減速 45% 2 秒；範圍爆炸造成 65% 命中傷害，附加灼燒 9/秒 3 秒與減速 1.5 秒。',
+      tempest:'連鎖至最多 4 名附近敵人，各造成 55% 命中傷害；首次命中分裂 2 顆 42% 發射傷害子彈。',
+      plague:poison+'；周圍敵人中毒 14/秒 4 秒；直接命中回復 1.1 生命。'
+    }[id];
+  }
+  function offerDesc(id,rank,previous){
+    const display=n=>Number(n.toFixed(2));
+    return '基礎直接傷害 '+(previous?display(basePower(id,previous))+' → ':'')+display(basePower(id,rank))+'（不含刻印、鍛造或事件加成）。'+elementDesc(id,rank);
+  }
   const heroForm=level=>HERO_FORMS.filter(f=>safeLevel(level)>=f.min).at(-1);
   function spellArt(id,rank=1,heroLevel=1){
     rank=clamp(safeLevel(rank),1,3);const evolved=RECIPES.some(r=>r.out===id);
@@ -55,20 +76,28 @@ const RF = (() => {
   const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
   function rand(s){s.rng=(Math.imul(1664525,s.rng)+1013904223)>>>0;return s.rng/4294967296;}
   function shuffle(s,a){a=a.slice();for(let i=a.length-1;i>0;i--){let j=Math.floor(rand(s)*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
-  function metaSafe(m={}){const num=(x,max)=>Number.isFinite(x)?clamp(Math.floor(x),0,max):0;return {v:1,credits:num(m.credits,1e7),forge:num(m.forge,5),ward:num(m.ward,5),archive:num(m.archive,3),runs:num(m.runs,1e6),wins:num(m.wins,1e6),best:num(m.best,1e7),chapter2Wins:num(m.chapter2Wins,1e6)};}
-  function unlocked(meta,id){return id===1||id===2&&metaSafe(meta).wins>0;}
-  function create(meta={},seed=Date.now(),chapterId=1){
+  function metaSafe(m={}){
+    m=m&&typeof m==='object'?m:{};const num=(x,max)=>Number.isFinite(x)?clamp(Math.floor(x),0,max):0;
+    const result={v:1,credits:num(m.credits,1e7),forge:num(m.forge,5),ward:num(m.ward,5),archive:num(m.archive,3),runs:num(m.runs,1e6),wins:num(m.wins,1e6),best:num(m.best,1e7),chapter2Wins:num(m.chapter2Wins,1e6),unlockedCharacters:['forge']};
+    // Older versions recorded victories, never inferred them from a wave or kill count.
+    if(result.wins>0||result.chapter2Wins>0||Array.isArray(m.unlockedCharacters)&&m.unlockedCharacters.includes('warden'))result.unlockedCharacters.push('warden');
+    return result;
+  }
+  function characterUnlocked(meta,id){return Object.hasOwn(CHARACTERS,id)&&metaSafe(meta).unlockedCharacters.includes(id);}
+  function unlocked(meta,id){const m=metaSafe(meta);return id===1||id===2&&(m.wins>0||m.chapter2Wins>0);}
+  function create(meta={},seed=Date.now(),chapterId=1,characterId='forge'){
     meta=metaSafe(meta);
-    const s={v:1,chapter:1,chill:0,rng:seed>>>0,phase:'play',time:0,wave:1,waveTime:0,nextSpawn:0.4,spawned:0,bossSpawned:false,
+    const hero=character(characterUnlocked(meta,characterId)?characterId:'forge');
+    const s={v:1,character:hero.id,chapter:1,chill:0,rng:seed>>>0,phase:'play',time:0,wave:1,waveTime:0,nextSpawn:0.4,spawned:0,bossSpawned:false,
       hp:100+meta.ward*12,maxHp:100+meta.ward*12,x:480,aimX:480,aimY:140,auto:true,invuln:0,dashCd:0,charge:40,
-      level:1,xp:0,xpNeed:9,coins:0,kills:0,catches:0,rerolls:2+meta.archive,loadout:[{id:'ember',level:1},{id:'frost',level:1}],
-      passives:{power:0,haste:0,bank:0,ward:0,catch:0},forge:meta.forge,shotCd:0,shotIndex:0,fireAnim:0,lastCore:'ember',moveDir:0,aimAngle:-Math.PI/2,
+      level:1,xp:0,xpNeed:9,coins:0,kills:0,catches:0,rerolls:2+meta.archive,loadout:hero.loadout.map(id=>({id,level:1})),
+      passives:{power:0,haste:0,bank:0,ward:0,catch:0},forge:meta.forge,shotCd:0,shotIndex:0,fireAnim:0,lastCore:hero.loadout[0],moveDir:0,aimAngle:-Math.PI/2,
       enemies:[],balls:[],bullets:[],fx:[],ghosts:[],texts:[],events:[],offers:[],uid:0,damage:{},peakBalls:0,peakEnemies:0,paid:false,telegraph:0,lane:0,
       encounter:null,bossesDefeated:[],hazards:[],eventOrder:[],eventIndex:0,encounterEvent:null,eventHistory:[],alterations:{power:1},pact:null};
     if(chapterId===2&&unlocked(meta,2)){
       s.chapter=2;s.level=10;for(let i=1;i<10;i++)s.xpNeed=Math.round(s.xpNeed*1.18+2);
       s.maxHp+=30;s.hp=s.maxHp;s.charge=100;s.rerolls+=2;s.passives.power=1;s.passives.haste=1;
-      s.loadout=['ember','frost','spark'].map(id=>({id,level:2}));
+      s.loadout=hero.chapter2Loadout.map(id=>({id,level:2}));
     }
     for(const x of [350,480,610])spawn(s,chapter(s).mobs[0],x,x===480?116:134);s.eventOrder=shuffle(s,Object.keys(ENCOUNTERS));return s;
   }
@@ -86,7 +115,7 @@ const RF = (() => {
     const hp=boss?boss.hp:stats[1]*(1+(s.wave-1)*(s.chapter===2?.16:.25));
     s.enemies.push({id:++s.uid,kind,...(boss?{bossId,attack:0,summon:8}:{}),...(kind==='iceguard'?{guard:3}:{}),...(kind==='icehound'?{pounce:3.4,windup:0,rush:0,targetX:x}:{}),x,y,r:boss?boss.r:stats[0],hp,maxHp:hp,speed:stats[2],slow:0,burn:0,poison:0,burnD:0,poisonD:0,burnOwner:'ember',poisonOwner:'thorn',flash:0,cast:0,age:0,shot:boss?2.2:2+rand(s)*2,seed:rand(s)*6.28,dead:false});
   }
-  function fx(s,type,x,y,color,size=1,x2=0,y2=0,core='',level=1,heroLevel=s.level){if(s.fx.length>=210)return;const life=['ascend','levelup'].includes(type)?1.1:type==='pulse'?.75:type==='death'?.6:type==='muzzle'?.18:type==='wall'?.28:['nova','bloom','siphon'].includes(type)?.65:type==='impact'?.48:.4;s.fx.push({type,x,y,color,size,x2,y2,core,level,heroLevel,life,max:life});}
+  function fx(s,type,x,y,color,size=1,x2=0,y2=0,core='',level=1,heroLevel=s.level){if(s.fx.length>=210)return;const life=['ascend','levelup'].includes(type)?1.1:type==='pulse'?.75:type==='death'?.6:type==='muzzle'?.18:type==='wall'?.28:['nova','bloom','siphon'].includes(type)?.65:type==='impact'?.48:.4;s.fx.push({type,x,y,color,size,x2,y2,core,level,heroLevel,character:character(s).id,life,max:life});}
   function event(s,type){if(s.events.length<12)s.events.push(type);}
   function hit(s,e,d,owner,secondary=false){if(e.dead||d<=0)return;
     const actual=Math.min(e.hp,d);e.hp-=actual;e.flash=Math.max(e.flash,!secondary?.12:actual>2?.07:0);s.damage[owner]=(s.damage[owner]||0)+actual;
@@ -137,8 +166,8 @@ const RF = (() => {
     if(e.kind==='iceguard'&&e.guard>0){if(b.banks>0){e.guard=0;fx(s,'shatter',e.x,e.y,'#a9edff',1.5);}else{e.guard--;d*=.45;if(e.guard===0)fx(s,'shatter',e.x,e.y,'#a9edff',1.5);}}
     hit(s,e,d,id);fx(s,'impact',b.x,b.y,kind.color,1,b.vx,b.vy,id,lv,b.heroLevel||s.level);event(s,'hit');
     const fire=id==='ember'||id==='steam',cold=id==='frost'||id==='steam';
-    if(fire){e.burn=3;e.burnD=4+lv*3;e.burnOwner=id;}if(cold)e.slow=2;
-    if(id==='thorn'||id==='plague'){e.poison=4;e.poisonD=4+lv*4;e.poisonOwner=id;}
+    if(fire){e.burn=3;e.burnD=burnDamage(lv);e.burnOwner=id;}if(cold)e.slow=Math.max(e.slow,2);
+    if(id==='thorn'||id==='plague'){e.poison=4;e.poisonD=poisonDamage(lv);e.poisonOwner=id;}
     if(id==='leech'||id==='plague'){s.hp=Math.min(s.maxHp,s.hp+(id==='plague'?1.1:.35));fx(s,'siphon',e.x,e.y,kind.color,1,s.x,518,id,lv,b.heroLevel||s.level);}
     if(id==='spark'||id==='tempest'){
       let last=e;const seen=new Set([e.id]);for(let n=0;n<(id==='tempest'?4:2);n++){
@@ -149,7 +178,7 @@ const RF = (() => {
     if(id==='steam'||id==='plague'){
       fx(s,id==='steam'?'nova':'bloom',e.x,e.y,kind.color,id==='steam'?3:2.2,0,0,id,lv,b.heroLevel||s.level);
       for(const q of s.enemies)if(!q.dead&&q.id!==e.id&&dist(q,e)<(id==='steam'?86:68)){
-        if(id==='steam'){hit(s,q,d*.65,id,true);q.slow=1.5;q.burn=3;q.burnD=9;q.burnOwner=id;}
+        if(id==='steam'){hit(s,q,d*.65,id,true);q.slow=Math.max(q.slow,1.5);q.burn=3;q.burnD=9;q.burnOwner=id;}
         else{q.poison=4;q.poisonD=14;q.poisonOwner=id;}
       }
     }
@@ -163,7 +192,7 @@ const RF = (() => {
     let tx=s.aimX,ty=Math.min(450,s.aimY);
     if(s.auto){const target=s.enemies.filter(e=>!e.dead).sort((a,b)=>(b.y*1.8-Math.abs(b.x-s.x))-(a.y*1.8-Math.abs(a.x-s.x)))[0];if(target){tx=target.x;ty=target.y;}else{tx=480+Math.sin(s.time)*180;ty=140;}}
     const muzzleX=s.x+14,muzzleY=493;let dx=tx-muzzleX,dy=Math.min(-55,ty-muzzleY);const len=Math.hypot(dx,dy);dx/=len;dy/=len;
-    const item=s.loadout[s.shotIndex++%s.loadout.length],power=TYPES[item.id].power*(1+(item.level-1)*.6)*(1+s.forge*.045)*(1+s.passives.power*.22)*Math.pow(.95,s.passives.haste)*s.alterations.power*(s.pact?.wave===s.wave?s.pact.damage:1);
+    const item=s.loadout[s.shotIndex++%s.loadout.length],power=basePower(item.id,item.level)*(1+s.forge*.045)*(1+s.passives.power*.22)*Math.pow(.95,s.passives.haste)*s.alterations.power*(s.pact?.wave===s.wave?s.pact.damage:1);
     s.fireAnim=.14;s.lastCore=item.id;s.aimAngle=Math.atan2(dy,dx);ball(s,item.id,item.level,muzzleX,muzzleY,dx*470,dy*470,power);fx(s,'muzzle',muzzleX,muzzleY,TYPES[item.id].color,.7,dx,dy,item.id,item.level,s.level);
     s.shotCd=.27*Math.pow(.85,s.passives.haste)*Math.pow(1.07,s.passives.power);
   }
@@ -171,7 +200,7 @@ const RF = (() => {
   function ready(s){return RECIPES.filter(r=>s.loadout.some(i=>i.id===r.a&&i.level===3)&&s.loadout.some(i=>i.id===r.b&&i.level===3));}
   function evolve(s,out){const r=ready(s).find(r=>r.out===out);if(!r)return false;s.loadout=s.loadout.filter(i=>i.id!==r.a&&i.id!==r.b);s.loadout.push({id:out,level:1});event(s,'evolve');fx(s,'ring',s.x,500,TYPES[out].color,5);return true;}
   function makeOffers(s){
-    const balls=[];for(const [id,t] of Object.entries(TYPES)){const own=s.loadout.find(i=>i.id===id);if(own&&own.level<3)balls.push({kind:'ball',id,title:t.name+' '+(own.level+1)+' 階',desc:'直接傷害提高，彈核外形、拖尾與命中特效同步強化。',tag:'強化已有彈核'});else if(!own&&s.loadout.length<4&&!RECIPES.some(r=>r.out===id))balls.push({kind:'ball',id,title:t.name+' 1 階',desc:t.desc,tag:'新彈核 · 佔用 1 格'});}
+    const balls=[];for(const [id,t] of Object.entries(TYPES)){const own=s.loadout.find(i=>i.id===id);if(own&&own.level<3)balls.push({kind:'ball',id,title:t.name+' '+(own.level+1)+' 階',desc:offerDesc(id,own.level+1,own.level),tag:'強化已有彈核'});else if(!own&&s.loadout.length<4&&!RECIPES.some(r=>r.out===id))balls.push({kind:'ball',id,title:t.name+' 1 階',desc:offerDesc(id,1),tag:'新彈核 · 佔用 1 格'});}
     const pool=balls.concat(Object.entries(PASSIVES).filter(([id])=>s.passives[id]<4).map(([id,p])=>({kind:'passive',id,title:p.name,desc:p.desc,tag:'刻印 · 含明確取捨'})));
     const own=shuffle(s,balls.filter(o=>s.loadout.some(i=>i.id===o.id)))[0];
     const picks=shuffle(s,pool.filter(o=>o!==own)).slice(0,own?2:3);if(own)picks.unshift(own);
@@ -186,7 +215,17 @@ const RF = (() => {
     s.offers=[];s.phase='play';event(s,'upgrade');return true;
   }
   function reroll(s){if(!['draft','shop'].includes(s.phase)||s.rerolls<=0)return false;s.rerolls--;makeOffers(s);return true;}
-  function pulse(s){if(s.phase!=='play'||s.charge<100)return false;s.charge=0;s.bullets=[];for(const e of s.enemies){hit(s,e,e.kind==='boss'?65:25,'pulse',true);e.y=Math.max(TOP+e.r,e.y-70);e.slow=2;}fx(s,'pulse',s.x,500,'#d6ecea',12);event(s,'pulse');return true;}
+  function pulse(s){
+    if(s.phase!=='play'||s.charge<100)return false;const hero=character(s);s.charge=0;s.bullets=[];
+    for(const e of s.enemies){
+      hit(s,e,e.kind==='boss'?hero.pulseBossDamage:hero.pulseDamage,'pulse',true);e.y=Math.max(TOP+e.r,e.y-70);e.slow=Math.max(e.slow,hero.pulseSlow);
+      if(hero.pulsePoison&&!e.dead){
+        if(e.poison<=0||e.poisonD<=hero.pulsePoison){e.poisonD=hero.pulsePoison;e.poisonOwner='pulse';}
+        e.poison=Math.max(e.poison,hero.pulsePoisonDuration);
+      }
+    }
+    fx(s,'pulse',s.x,500,hero.id==='warden'?hero.color:'#d6ecea',12);event(s,'pulse');return true;
+  }
   function dash(s,dir=1){if(s.phase!=='play'||s.dashCd>0)return false;const from=s.x;s.x=clamp(s.x+dir*125,LEFT+22,RIGHT-22);s.chill=0;fx(s,'dash',from,520,'#a3dfeb',1,s.x,520);s.invuln=.65;s.dashCd=3.5;fx(s,'ring',s.x,520,'#a3dfeb',2);event(s,'dash');return true;}
   function step(s,dt,input={}){
     if(s.phase!=='play')return;dt=clamp(dt,0,1/30);s.time+=dt;if(!s.encounter)s.waveTime+=dt;s.shotCd-=dt;s.invuln=Math.max(0,s.invuln-dt);s.dashCd=Math.max(0,s.dashCd-dt);s.fireAnim=Math.max(0,(s.fireAnim||0)-dt);s.moveDir=input.move||0;for(const g of s.ghosts)g.life-=dt;s.ghosts=s.ghosts.filter(g=>g.life>0);
@@ -215,7 +254,7 @@ const RF = (() => {
       if(e.y+e.r>=FLOOR){e.dead=true;damagePlayer(s,e.kind==='iceguard'?18:e.kind==='icehound'?15:e.kind==='guard'?14:e.kind==='runner'?10:12);}
     }
     if(s.phase!=='play')return;
-    for(const h of s.hazards){h.life-=dt;if(h.life<=0){const cold=['ice','blizzard'].includes(h.kind);fx(s,'hazard',h.x,520,cold?'#a9edff':h.kind==='star'?'#c5aaff':'#ff9b64',h.width,0,0,h.kind);if(Math.abs(s.x-h.x)<h.width/2+12&&damagePlayer(s,h.damage)&&cold)s.chill=1.2;}}s.hazards=s.hazards.filter(h=>h.life>0);
+    for(const h of s.hazards){h.life-=dt;if(h.life<=0){const cold=['ice','blizzard'].includes(h.kind);fx(s,'hazard',h.x,520,cold?'#a9edff':h.kind==='star'?'#c5aaff':'#ff9b64',h.width,0,0,h.kind);if(Math.abs(s.x-h.x)<h.width/2+HAZARD_PADDING&&damagePlayer(s,h.damage)&&cold)s.chill=1.2;}}s.hazards=s.hazards.filter(h=>h.life>0);
     if(s.telegraph>0){s.telegraph-=dt;if(s.telegraph<=0){fx(s,'arc',s.lane,TOP,'#ff767b',4,s.lane,540);if(Math.abs(s.x-s.lane)<43)damagePlayer(s,20);}}
     if(s.phase!=='play')return;
     const active=s.enemies.filter(e=>!e.dead);s.peakEnemies=Math.max(s.peakEnemies,active.length);
@@ -223,19 +262,20 @@ const RF = (() => {
       if(b.x-b.r<LEFT){b.x=LEFT+b.r;b.vx=Math.abs(b.vx);b.banks++;fx(s,'wall',b.x,b.y,TYPES[b.type].color,.35);}if(b.x+b.r>RIGHT){b.x=RIGHT-b.r;b.vx=-Math.abs(b.vx);b.banks++;fx(s,'wall',b.x,b.y,TYPES[b.type].color,.35);}
       if(b.y-b.r<TOP){b.y=TOP+b.r;b.vy=Math.abs(b.vy);b.banks++;fx(s,'wall',b.x,b.y,TYPES[b.type].color,.35);}
       for(const e of active){if(e.dead||(e.id===b.last&&b.lock>0))continue;const dx=b.x-e.x,dy=b.y-e.y,r=b.r+e.r;if(Math.abs(dx)>r||Math.abs(dy)>r)continue;const distance=Math.hypot(dx,dy);if(distance<r){const nx=distance?dx/distance:0,ny=distance?dy/distance:-1,dot=b.vx*nx+b.vy*ny;b.x=e.x+nx*(r+.5);b.y=e.y+ny*(r+.5);if(dot<0){b.vx-=2*dot*nx;b.vy-=2*dot*ny;}b.last=e.id;b.lock=.1;impact(s,b,e);break;}}
-      if(b.y>518){if(Math.abs(b.x-s.x)<52+s.passives.catch*18){s.catches++;s.charge=clamp(s.charge+1+s.passives.catch*.35,0,100);fx(s,'catch',b.x,516,TYPES[b.type].color,.6);}b.dead=true;}
+      if(b.y>518){if(Math.abs(b.x-s.x)<52+s.passives.catch*18){s.catches++;s.charge=clamp(s.charge+1+character(s).catchBonus+s.passives.catch*.35,0,100);fx(s,'catch',b.x,516,TYPES[b.type].color,.6);}b.dead=true;}
       if(b.age>12)b.dead=true;
     }
     for(const b of s.bullets){b.x+=b.vx*dt;b.y+=b.vy*dt;b.life-=dt;if(Math.hypot(b.x-s.x,b.y-520)<18+b.r){if(damagePlayer(s,b.kind==='ice'?10:8)&&b.kind==='ice')s.chill=1.2;b.life=0;}if(b.x<LEFT-30||b.x>RIGHT+30||b.y>570)b.life=0;}
     s.enemies=s.enemies.filter(e=>!e.dead);s.balls=s.balls.filter(b=>!b.dead);s.bullets=s.bullets.filter(b=>b.life>0);
     if(s.phase==='play'&&s.xp>=s.xpNeed){s.xp-=s.xpNeed;s.level++;s.xpNeed=Math.round(s.xpNeed*1.18+2);s.phase='draft';makeOffers(s);const form=heroForm(s.level),ascended=HERO_FORMS.some(f=>f.min===s.level);fx(s,ascended?'ascend':'levelup',s.x,520,form.color,form.tier);if(ascended)event(s,'ascend');event(s,'draft');}
   }
-  function settle(s,m){m=metaSafe(m);if(!['win','lose'].includes(s.phase)||s.paid)return m;s.paid=true;const reward=Math.floor(s.coins*.7)+s.wave*5+(s.phase==='win'?(s.chapter===2?140:80):0);m.credits+=reward;m.runs++;if(s.phase==='win'){m.wins++;if(s.chapter===2)m.chapter2Wins++;}m.best=Math.max(m.best,s.kills);return m;}
+  function settle(s,m){m=metaSafe(m);if(!['win','lose'].includes(s.phase)||s.paid)return m;s.paid=true;const reward=Math.floor(s.coins*.7)+s.wave*5+(s.phase==='win'?(s.chapter===2?140:80):0);s.earned=reward;m.credits+=reward;m.runs++;if(s.phase==='win'){m.wins++;if(s.chapter===2)m.chapter2Wins++;}m.best=Math.max(m.best,s.kills);return metaSafe(m);}
   function cost(m,k){return 50+metaSafe(m)[k]*45;}
   function buy(m,k){if(!['forge','ward','archive'].includes(k))return false;const max=k==='archive'?3:5,c=cost(m,k);if(m[k]>=max||m.credits<c)return false;m.credits-=c;m[k]++;return true;}
   function snapshot(s){const o=JSON.parse(JSON.stringify(s));o.events=[];o.fx=[];o.ghosts=[];o.texts=[];for(const b of o.balls){delete b.trail;delete b.trailClock;}return o;}
   function restore(raw){try{
-    if(!raw||raw.v!==1||!['play','pause','draft','shop','event'].includes(raw.phase)||!Array.isArray(raw.loadout)||raw.loadout.length<1||raw.loadout.length>4)return null;
+    const checkpoint=raw?.phase==='win'&&raw.chapter===1&&raw.paid===true&&Array.isArray(raw.bossesDefeated)&&raw.bossesDefeated.includes('bell');
+    if(!raw||raw.v!==1||!checkpoint&&!['play','pause','draft','shop','event'].includes(raw.phase)||!Array.isArray(raw.loadout)||raw.loadout.length<1||raw.loadout.length>4)return null;
     if(raw.chapter!==undefined&&![1,2].includes(raw.chapter))return null;
     if(raw.loadout.some(i=>!TYPES[i.id]||![1,2,3].includes(i.level)))return null;
     if(!Number.isFinite(raw.hp)||raw.hp<=0||raw.hp>1000||!Number.isFinite(raw.time)||raw.time<0||!Number.isFinite(raw.wave)||raw.wave<1||raw.wave>9)return null;
@@ -249,14 +289,16 @@ const RF = (() => {
     if(raw.alterations&&(!Number.isFinite(raw.alterations.power)||raw.alterations.power<1||raw.alterations.power>2))return null;
     if(raw.pact&&(!Number.isInteger(raw.pact.wave)||raw.pact.damage!==1.35||raw.pact.incoming!==1.25))return null;
     if(raw.bossesDefeated&&(!Array.isArray(raw.bossesDefeated)||raw.bossesDefeated.length>3||raw.bossesDefeated.some(id=>!BOSSES[id])))return null;
-    const s=Object.assign(create({},1),raw);s.events=[];s.fx=[];s.ghosts=[];s.texts=[];s.fireAnim=0;
+    const s=Object.assign(create({},1),raw);s.character=character(raw.character).id;s.events=[];s.fx=[];s.ghosts=[];s.texts=[];s.fireAnim=0;
     s.chill=Number.isFinite(s.chill)?clamp(s.chill,0,1.2):0;
     s.balls=s.balls.map(b=>({...b,heroLevel:safeLevel(b.heroLevel??s.level)}));
     // Existing 0.5 runs retain their current wave and do not replay missed events.
     if(raw.eventOrder===undefined)s.eventIndex=[3,6,8].filter(w=>w<=s.wave).length;
-    for(const e of s.enemies)if(e.kind==='boss'){e.bossId??='bell';e.attack??=0;e.summon??=8;e.y=Math.max(232,e.y);s.encounter=e.bossId;}
+    // Legacy bosses lacked an ID; current saves may legally be above 232 after a pulse.
+    for(const e of s.enemies)if(e.kind==='boss'){const legacy=!e.bossId;e.bossId??='bell';e.attack??=0;e.summon??=8;e.y=Math.max(legacy?232:TOP+BOSSES[e.bossId].r,e.y);if(!checkpoint)s.encounter=e.bossId;}
+    if(checkpoint)s.encounter=null;
     if(s.phase==='pause')s.phase='play';return s;
   }catch{return null;}}
-  return {W,H,LEFT,RIGHT,TOP,FLOOR,TYPES,RECIPES,HERO_FORMS,heroForm,spellArt,PASSIVES,BOSSES,CHAPTERS,chapter,unlocked,nextChapter,ENCOUNTERS,clamp,rand,create,spawn,step,hit,impact,ball,ready,evolve,makeOffers,applyOffer,reroll,pulse,dash,settle,buy,cost,metaSafe,snapshot,restore,beginBoss,openEncounter,eventChoices,chooseEncounter};
+  return {W,H,LEFT,RIGHT,TOP,FLOOR,HAZARD_PADDING,TYPES,RECIPES,HERO_FORMS,heroForm,spellArt,basePower,PASSIVES,BOSSES,CHAPTERS,chapter,CHARACTERS,character,characterUnlocked,unlocked,nextChapter,ENCOUNTERS,clamp,rand,create,spawn,step,hit,impact,ball,ready,evolve,makeOffers,applyOffer,reroll,pulse,dash,settle,buy,cost,metaSafe,snapshot,restore,beginBoss,openEncounter,eventChoices,chooseEncounter};
 })();
 if(typeof module!=='undefined')module.exports=RF;

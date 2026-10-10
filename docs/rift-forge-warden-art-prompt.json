@@ -1,0 +1,104 @@
+{
+  "character": "hero-warden",
+  "tool": "builtin image_gen",
+  "mode": "generate",
+  "useCase": "stylized-concept",
+  "referenceInspected": "public/rift-forge/assets/sprites/hero-veteran.webp",
+  "prompt": "Use case: stylized-concept. Asset type: production hand-painted dark-fantasy 2D playable hero sprite atlas, genuinely transparent RGBA. Create a NEW original character called the Frost Warden, six action key poses of exactly the SAME character, a companion in visual style to the detailed painted Rift Forge hero reference already shown: sturdy compact full-body knight, overhead orthographic three-quarter camera, layered real materials, crisp silhouette at small game scale. The Frost Warden must be a distinctly different silhouette and equipment design, not a recolor. Silver-white plate armor over dark charcoal joints, faceted pale-cyan ice shoulder guards, short deep-teal split cape, pointed narrow closed silver helm with a restrained cyan visor, thorn-like silver details on forearms and greaves, large attached ice-crystal ring cannon around one gauntlet. Two arms, two complete legs, human knight anatomy. The ring cannon has a thick circular metallic rim with large integrated ice teeth; all parts remain attached, no floating ornaments. No sword or shield. Exactly THREE columns and TWO rows on a 1536 by 1024 landscape canvas. Each of SIX complete figures occupies only the central 65% of its own 512 by 512 cell with generous completely empty transparent gutters. Consistent character scale, body proportions, camera and armor in all six poses. Reading order: 1 idle, planted ready stance with cannon arm low; 2 move-left, leftward stride and cape trailing right; 3 move-right, rightward stride and cape trailing left; 4 charge, deep braced crouch gathering the ring cannon close to chest; 5 fire, cannon arm thrust outward upward-right with strong recoil stance, no projectile or detached effects; 6 hurt, readable recoil and bowed head, cannon lowered. Face generally diagonally upward-right like the existing hero sprites; three-quarter rearward battle view with full helmet and torso volume. Color contrast must read pale silver and ice cyan against a dark dungeon, with dark teal cloth for depth. Dense polished hand-painted detail, restrained clean highlights, no flat vector art, no pixel art, no cartoon thick outlines. Absolutely no floor, platform, ground shadows, glow haze, smoke, grid, border, labels, lettering, symbols in the background, additional figures, cropped limbs, overlapping cells, or checkerboard. All pixels outside the six figures must be actual alpha-zero transparency. Both boots, complete helmet, cape and entire ring cannon visible in every cell.",
+  "transparent_background": true,
+  "runtimeAsset": "public/rift-forge/assets/sprites/hero-warden.webp",
+  "preparation": "Connected-component alpha bounds (alpha > 128, area >= 10000), six-pixel crop padding, common uniform scale 0.4216417910447761, Lanczos resize and pure 3x2 packing. No repainting, background removal or generated geometry. Equivalent to pack-sprites.py packing; a temporary NumPy/Python component traversal was used because bundled SciPy was unavailable.",
+  "format": {
+    "width": 768,
+    "height": 512,
+    "cell": 256,
+    "columns": 3,
+    "frames": 6,
+    "pivot": [
+      128,
+      240
+    ],
+    "bytes": 95380
+  },
+  "frameOrder": [
+    "idle",
+    "move-left",
+    "move-right",
+    "charge",
+    "fire",
+    "hurt"
+  ],
+  "validation": {
+    "inspectedOriginal": true,
+    "inspectedRuntimeAtlas": true,
+    "sourceMainSilhouettes": 6,
+    "allFrameBorderAlphaMax": 0,
+    "allFrameAlphaRange": [
+      0,
+      255
+    ],
+    "frames": [
+      {
+        "pose": "idle",
+        "opaqueSilhouettePixels": 12264,
+        "bounds": [
+          66,
+          51,
+          190,
+          238
+        ]
+      },
+      {
+        "pose": "move-left",
+        "opaqueSilhouettePixels": 12264,
+        "bounds": [
+          45,
+          55,
+          210,
+          238
+        ]
+      },
+      {
+        "pose": "move-right",
+        "opaqueSilhouettePixels": 11963,
+        "bounds": [
+          45,
+          49,
+          211,
+          238
+        ]
+      },
+      {
+        "pose": "charge",
+        "opaqueSilhouettePixels": 12426,
+        "bounds": [
+          52,
+          69,
+          204,
+          237
+        ]
+      },
+      {
+        "pose": "fire",
+        "opaqueSilhouettePixels": 16098,
+        "bounds": [
+          18,
+          31,
+          238,
+          237
+        ]
+      },
+      {
+        "pose": "hurt",
+        "opaqueSilhouettePixels": 12626,
+        "bounds": [
+          53,
+          73,
+          202,
+          237
+        ]
+      }
+    ],
+    "note": "The source RGB preview contains muted surrounding color, but alpha inspection confirms six disconnected character silhouettes and near-zero background. Native generated alpha was preserved during crop/resize/packing."
+  }
+}

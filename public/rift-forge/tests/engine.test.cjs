@@ -56,3 +56,96 @@ test('frost hound windup locks a target before a real accelerated pounce',()=>{c
 test('ice curses telegraph first, slow only on an actual hit, and dash clears chill',()=>{const s=R.create({wins:1},42,2);s.enemies=[];s.shotCd=s.nextSpawn=99;R.spawn(s,'icewitch',s.x,220);s.enemies[0].shot=0;R.step(s,1/120);assert.equal(s.chill,0);assert.equal(s.hazards[0].kind,'ice');assert.ok(s.hazards[0].life>1.5);s.enemies=[];s.bullets=[];s.hazards[0].life=.001;const hp=s.hp;R.step(s,1/120);assert.equal(s.hp,hp-14);assert.equal(s.chill,1.2);const x=s.x;R.step(s,1/30,{move:1});assert.ok(Math.abs(s.x-x-7.7)<1e-7);assert.ok(R.dash(s,1));assert.equal(s.chill,0);s.bullets=[{x:s.x,y:520,vx:0,vy:0,r:6,life:2,kind:'ice'}];R.step(s,1/120);assert.equal(s.chill,0);});
 test('queen blizzards retain an open corridor in both phases and summons stay bounded',()=>{for(const rage of [false,true]){const s=R.create({wins:1},42,2);s.enemies=[];s.shotCd=s.nextSpawn=99;R.beginBoss(s,'queen');const e=s.enemies[0];if(rage)e.hp=e.maxHp*.4;for(let turn=0;turn<4;turn++){e.shot=0;e.summon=0;s.hazards=[];s.bullets=[];R.step(s,1/120);assert.equal(s.hazards.length,3);assert.ok(s.hazards.every(h=>h.life>1.4));const safe=R.LEFT+92+turn*184;assert.ok(s.hazards.every(h=>Math.abs(h.x-safe)>h.width/2+12));}assert.ok(s.enemies.filter(e=>e.kind==='icehound').length<=6);}});
 test('chapter two saves retain warnings, pounce, shield and chill while older runs remain chapter one',()=>{const s=R.create({wins:1},42,2);R.spawn(s,'icehound',400,200);R.spawn(s,'icewitch',600,200);s.shotCd=99;s.nextSpawn=99;s.enemies.at(-1).shot=0;s.chill=.8;R.step(s,1/120);const snap=R.snapshot(s);assert.deepEqual(R.snapshot(R.restore(snap)),snap);const old=R.snapshot(fresh());delete old.chapter;delete old.chill;assert.equal(R.restore(old).chapter,1);const bad={...snap,chapter:3};assert.equal(R.restore(bad),null);assert.equal(R.restore({...snap,wave:9}),null);});
+test('character migration trusts victories or saved unlocks, never kills or attempts',()=>{
+  const old={v:1,credits:321,forge:3,ward:2,archive:1,runs:30,best:9999},before=JSON.stringify(old);
+  assert.deepEqual(R.metaSafe(old).unlockedCharacters,['forge']);assert.equal(R.characterUnlocked(old,'warden'),false);assert.equal(JSON.stringify(old),before);
+  for(const reliable of [{wins:1},{chapter2Wins:1},{unlockedCharacters:['warden']}]){
+    const m=R.metaSafe({...old,...reliable});assert.deepEqual(m.unlockedCharacters,['forge','warden']);assert.equal(m.credits,321);assert.equal(m.forge,3);assert.equal(m.runs,30);
+    assert.equal(R.characterUnlocked(JSON.parse(JSON.stringify(m)),'warden'),true);
+  }
+  for(const wins of ['1',-1,NaN,Infinity])assert.equal(R.characterUnlocked({wins},'warden'),false);
+  assert.deepEqual(R.metaSafe({unlockedCharacters:['unknown','warden','warden','forge']}).unlockedCharacters,['forge','warden']);
+  assert.deepEqual(R.metaSafe({unlockedCharacters:'warden'}).unlockedCharacters,['forge']);assert.equal(R.characterUnlocked({},'toString'),false);
+});
+test('new run character selection validates locks and keeps the original forge build',()=>{
+  for(const id of ['warden','unknown','toString','constructor'])assert.equal(R.create({},42,1,id).character,'forge');
+  const forge=R.create({wins:1},42,1,'forge'),warden=R.create({wins:1},42,1,'warden');
+  assert.equal(R.character(forge),R.CHARACTERS.forge);assert.equal(R.character('warden'),R.CHARACTERS.warden);assert.equal(R.character('unknown'),R.CHARACTERS.forge);assert.equal(R.character('toString'),R.CHARACTERS.forge);
+  assert.deepEqual(forge.loadout,[{id:'ember',level:1},{id:'frost',level:1}]);assert.deepEqual(warden.loadout,[{id:'frost',level:1},{id:'thorn',level:1}]);
+  assert.equal(warden.lastCore,'frost');assert.equal(warden.hp,forge.hp);assert.equal(warden.charge,forge.charge);
+  warden.loadout[0].level=3;assert.equal(R.create({wins:1},42,1,'warden').loadout[0].level,1);
+});
+test('a chapter-two victory record unlocks both chapter entry and the frost warden loadout',()=>{
+  const s=R.create({chapter2Wins:1,forge:2,ward:1},42,2,'warden');assert.equal(R.unlocked({chapter2Wins:1},2),true);
+  assert.equal(s.chapter,2);assert.equal(s.character,'warden');assert.equal(s.level,10);assert.equal(s.hp,142);assert.equal(s.forge,2);assert.equal(s.charge,100);
+  assert.deepEqual(s.loadout,[{id:'frost',level:2},{id:'thorn',level:2},{id:'leech',level:2}]);
+});
+test('the final guardian unlocks the warden at settlement and permanently keeps the reward',()=>{
+  const s=fresh();s.wave=9;R.beginBoss(s,'bell');R.hit(s,s.enemies[0],99999,'ember');assert.equal(s.phase,'win');
+  const m=R.settle(s,{credits:90});assert.equal(R.characterUnlocked(m,'warden'),true);assert.deepEqual(m.unlockedCharacters,['forge','warden']);assert.equal(m.wins,1);assert.equal(m.credits,90+s.earned);
+  assert.deepEqual(R.settle(s,m),m);assert.equal(R.metaSafe(JSON.parse(JSON.stringify(m))).unlockedCharacters.length,2);
+  const lost=fresh();lost.phase='lose';lost.kills=999;lost.wave=9;const failed=R.settle(lost,{});assert.equal(R.characterUnlocked(failed,'warden'),false);
+  const mid=fresh();R.beginBoss(mid,'maw');R.hit(mid,mid.enemies[0],99999,'ember');assert.equal(R.characterUnlocked(R.settle(mid,{}),'warden'),false);
+});
+test('warden frost ring trades burst for four seconds of poison and slow while forge stays unchanged',()=>{
+  for(const id of ['forge','warden']){
+    const s=R.create({wins:1},42,1,id);s.enemies=[];s.nextSpawn=s.shotCd=100;s.charge=100;R.spawn(s,'guard',300,250);R.spawn(s,'boss',600,250);
+    const [mob,boss]=s.enemies;mob.hp=mob.maxHp=1000;boss.shot=100;const oldBoss=boss.hp;s.bullets=[{x:480,y:350}];
+    assert.ok(R.pulse(s));assert.equal(s.charge,0);assert.deepEqual(s.bullets,[]);assert.equal(mob.y,180);assert.equal(boss.y,180);
+    assert.equal(mob.hp,1000-(id==='warden'?18:25));assert.equal(boss.hp,oldBoss-(id==='warden'?40:65));
+    assert.equal(mob.slow,id==='warden'?4:2);assert.equal(mob.poison,id==='warden'?4:0);assert.equal(mob.poisonD,id==='warden'?8:0);assert.equal(s.fx.find(f=>f.type==='pulse').character,id);
+    const hp=mob.hp,y=mob.y;for(let i=0;i<30;i++)R.step(s,1/30);
+    assert.ok(Math.abs(hp-mob.hp-(id==='warden'?8:0))<1e-8);assert.ok(Math.abs(mob.y-y-8*.55)<1e-8);
+  }
+});
+test('warden control duration survives ordinary frost hits and does not weaken stronger poison',()=>{
+  const s=R.create({wins:1},42,1,'warden');s.enemies=[];R.spawn(s,'boss',480,250);const e=s.enemies[0];e.poison=2;e.poisonD=16;e.poisonOwner='thorn';s.charge=100;
+  R.pulse(s);assert.equal(e.poison,4);assert.equal(e.poisonD,16);assert.equal(e.poisonOwner,'thorn');
+  R.impact(s,{type:'frost',level:1,power:10,banks:0,generation:1,x:e.x,y:e.y,vx:0,vy:-470},e);assert.equal(e.slow,4);
+  const restored=R.restore(R.snapshot(s));assert.equal(restored.character,'warden');assert.equal(restored.enemies[0].slow,4);assert.equal(restored.enemies[0].poisonD,16);
+});
+test('warden catches add exactly one energy beyond passives and still cap at full charge',()=>{
+  for(const id of ['forge','warden'])for(const charge of [0,99]){
+    const s=R.create({wins:1},42,1,id);s.enemies=[];s.nextSpawn=s.shotCd=100;s.passives.catch=2;s.charge=charge;
+    R.ball(s,'frost',1,s.x,517,0,470,10);R.ball(s,'frost',1,150,517,0,470,10);R.step(s,1/120);
+    assert.equal(s.catches,1);assert.equal(s.charge,Math.min(100,charge+1+(id==='warden'?1:0)+.7));
+    R.dash(s);assert.equal(s.fx.find(f=>f.type==='dash').character,id);
+  }
+});
+test('old or unknown character saves keep their existing build, progress and RNG',()=>{
+  const s=fresh();s.level=11;s.hp=73;s.coins=94;s.loadout=[{id:'steam',level:2},{id:'thorn',level:3}];const base=R.snapshot(s);
+  for(const id of [undefined,'unknown','constructor']){
+    const old={...base,character:id},before=JSON.stringify(old),copy=R.restore(old);assert.ok(copy);assert.equal(copy.character,'forge');assert.deepEqual(copy.loadout,base.loadout);
+    for(const key of ['level','hp','coins','rng','wave'])assert.equal(copy[key],old[key]);assert.equal(JSON.stringify(old),before);
+  }
+  const warden=R.create({wins:1},42,1,'warden');warden.loadout=[{id:'plague',level:2},{id:'frost',level:3}];assert.deepEqual(R.snapshot(R.restore(R.snapshot(warden))),R.snapshot(warden));
+});
+test('paid first-chapter checkpoint reloads the earned reward and carries the chosen build once',()=>{
+  const s=R.create({wins:1},42,1,'warden');s.level=13;s.loadout=[{id:'plague',level:2},{id:'frost',level:3}];s.passives.catch=2;s.maxHp=154;s.hp=73;s.wave=9;
+  R.beginBoss(s,'bell');R.hit(s,s.enemies[0],99999,'thorn');const m=R.settle(s,{wins:1}),snap=R.snapshot(s),copy=R.restore(snap);assert.ok(copy);assert.equal(copy.phase,'win');assert.equal(copy.encounter,null);assert.equal(copy.earned,s.earned);
+  assert.deepEqual(R.settle(copy,m),m);assert.equal(R.nextChapter(copy),true);assert.equal(copy.character,'warden');assert.deepEqual(copy.loadout,s.loadout);assert.equal(copy.level,13);assert.equal(copy.hp,154);assert.equal(copy.passives.catch,2);assert.equal(copy.earned,undefined);
+  assert.equal(R.nextChapter(copy),false);assert.deepEqual(R.settle(copy,m),m);assert.equal(R.restore({...snap,paid:false}),null);assert.equal(R.restore({...snap,bossesDefeated:[]}),null);assert.equal(R.restore({...snap,chapter:2,wave:7}),null);assert.equal(R.restore({...snap,phase:'lose'}),null);
+});
+test('core offers show precise unmodified damage using the actual shot rank scaling',()=>{
+  const expected={ember:[12,19.2,26.4],frost:[10,16,22],spark:[10,16,22],thorn:[11,17.6,24.2],leech:[13,20.8,28.6],echo:[9,14.4,19.8],steam:[26,41.6,57.2],tempest:[23,36.8,50.6],plague:[25,40,55]};
+  for(const [id,values] of Object.entries(expected))for(const rank of [1,2,3]){
+    const s=fresh();s.loadout=[{id,level:rank}];R.step(s,1/120);assert.ok(Math.abs(s.balls[0].power-values[rank-1])<1e-9);assert.equal(s.balls[0].power,R.basePower(id,rank));
+    if(rank<3){s.forge=5;s.passives.power=4;s.alterations.power=1.18;const offer=R.makeOffers(s).find(o=>o.kind==='ball'&&o.id===id);assert.ok(offer.desc.includes(values[rank-1]+' → '+values[rank]));assert.ok(offer.desc.includes('不含刻印、鍛造或事件加成'));}
+  }
+  const s=fresh(),seen=new Set();s.loadout=[];for(let i=0;i<100;i++)for(const o of R.makeOffers(s))if(o.kind==='ball'){seen.add(o.id);assert.ok(o.desc.includes('基礎直接傷害 '+expected[o.id][0]+'（'));}assert.equal(seen.size,6);
+});
+test('upgraded element descriptions match damage-over-time and fixed utility effects',()=>{
+  for(const [id,phrase] of [['ember','灼燒 10/秒'],['thorn','中毒 12/秒'],['frost','減速 45%，持續 2 秒'],['leech','0.35 生命'],['spark','2 名附近敵人'],['echo','42% 發射傷害']]){
+    const s=fresh();s.loadout=[{id,level:1}];assert.ok(R.makeOffers(s).find(o=>o.kind==='ball'&&o.id===id).desc.includes(phrase));
+  }
+});
+test('hazard collision uses the shared visible padding at its exact boundary',()=>{
+  for(const offset of [R.HAZARD_PADDING+40-.01,R.HAZARD_PADDING+40]){const s=fresh();s.shotCd=100;s.x=480+offset;s.hazards=[{x:480,width:80,kind:'star',life:.001,max:1,damage:17}];R.step(s,1/120);assert.equal(s.hp,offset<52?83:100);}
+});
+test('save reload preserves legal pulse knockback on every boss without breaking legacy placement',()=>{
+  for(const id of Object.keys(R.BOSSES)){
+    const s=R.create({wins:1},42,['reaper','queen'].includes(id)?2:1,'warden');R.beginBoss(s,id);s.charge=100;R.pulse(s);const before=R.snapshot(s),copy=R.restore(before);assert.ok(copy);assert.equal(copy.enemies[0].y,s.enemies[0].y);assert.deepEqual(R.snapshot(copy),before);
+    s.charge=100;R.pulse(s);assert.equal(R.restore(R.snapshot(s)).enemies[0].y,R.TOP+R.BOSSES[id].r);
+  }
+  const old=fresh();R.spawn(old,'boss',480,150);delete old.enemies[0].bossId;old.enemies[0].y=155;assert.equal(R.restore(R.snapshot(old)).enemies[0].y,232);
+});
